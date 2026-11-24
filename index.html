@@ -41,32 +41,69 @@
     </script>
 
     <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="https://unpkg.com/lucide@latest"></script>
 
     <!-- GSAP + ScrollTrigger & Lenis Smooth Scroll CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-    <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
 
     <style>
-        /* Base & Scrollbar Styling */
-        html.lenis, html.lenis body {
-            height: auto;
-        }
-        .lenis.lenis-smooth {
-            scroll-behavior: auto !important;
-        }
-        .lenis.lenis-smooth [data-lenis-prevent] {
-            overscroll-behavior: contain;
-        }
-        .lenis.lenis-stopped {
-            overflow: hidden;
-        }
+        /* Native scrolling: stabil untuk halaman publik dan seluruh menu admin. */
         body {
             background-color: #09090B;
             color: #F8FAFC;
             font-family: 'Inter', sans-serif;
             overflow-x: hidden;
+        }
+
+        /* Admin memakai scroll halaman normal; konten menu tidak dikunci tinggi layar. */
+        html, body {
+            min-height: 100%;
+            overflow-y: auto;
+            overscroll-behavior-y: auto;
+        }
+        #admin-dashboard-view {
+            min-height: 100vh;
+            height: auto;
+            overflow: visible;
+            align-items: stretch;
+        }
+        #admin-dashboard-view > .flex-1,
+        #admin-main-content {
+            min-height: 0;
+            overflow: visible;
+        }
+        #admin-main-content {
+            padding-bottom: max(2rem, env(safe-area-inset-bottom));
+            overflow-wrap: anywhere;
+        }
+        #admin-sidebar {
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+        #admin-nav-links {
+            min-height: 0;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+        }
+        #modal-overlay,
+        #modal-content {
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+        @media (max-width: 1023px) {
+            #admin-dashboard-view {
+                display: block;
+            }
+            #admin-dashboard-view > .flex-1 {
+                width: 100%;
+                min-height: 100vh;
+            }
+            #admin-main-content {
+                width: 100%;
+                max-width: none;
+            }
         }
 
         /* Word-by-word reveal styling */
@@ -418,7 +455,7 @@
                 orgName: 'Punguan Naposo Toga Simatupang Se-Duri',
                 orgSubtitle: 'Anak - Boru - dohot Bere',
                 motto: 'Horas! Sada Roha, Sada Pikkiran, Marsiurupan',
-                heroDesc: 'Wadah persatuan dan kekeluargaan generasi muda (Naposo) keturunan Toga Simatupang Se-Duri â€” Togatorop, Sianturi, dan Siburian â€” beserta Anak - Boru - dohot Bere untuk saling menopang dalam adat, iman, dan karya.',
+                heroDesc: 'Wadah persatuan dan kekeluargaan generasi muda (Naposo) keturunan Toga Simatupang Se-Duri Ã¢â‚¬â€ Togatorop, Sianturi, dan Siburian Ã¢â‚¬â€ beserta Anak - Boru - dohot Bere untuk saling menopang dalam adat, iman, dan karya.',
                 tickerText: 'HORAS! Undangan Partangiangan Bulanan & Arisan Punguan Naposo Toga Simatupang Se-Duri pada Minggu, 14 Desember 2026 pukul 15.00 WIB di Sektor Pusat. Diharapkan kehadiran seluruh Anak - Boru - dohot Bere!',
                 maintenanceMessage: 'Horas! Situs resmi Punguan Naposo Toga Simatupang Se-Duri Anak - Boru - dohot Bere sedang dalam pemeliharaan berkala oleh pengurus. Silakan kembali beberapa saat lagi atau hubungi Sekretaris Punguan via WhatsApp.',
                 address: 'Sekretariat Punguan Naposo Toga Simatupang Se-Duri, Kota Duri, Kab. Bengkalis, Riau',
@@ -682,7 +719,11 @@
             const headers = { ...(options.headers || {}) };
             if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
             if (pntsAdminToken) headers.Authorization = 'Bearer ' + pntsAdminToken;
-            const response = await fetch(PNTS_API_BASE + path, { ...options, headers });
+            const response = await fetch(PNTS_API_BASE + path, {
+                cache: 'no-store',
+                ...options,
+                headers
+            });
             const result = await response.json().catch(() => ({}));
             if (!response.ok || result.success === false) {
                 throw new Error(result.message || ('Permintaan API gagal (' + response.status + ').'));
@@ -741,6 +782,10 @@
         }
 
         async function syncPublicFromCloud() {
+            // Strategi stale-while-revalidate:
+            // 1) loadData() sudah membaca cache localStorage secara sinkron saat file dimuat.
+            // 2) Portal langsung dirender memakai cache tersebut.
+            // 3) Data server diambil setelah tampilan muncul, tanpa menahan halaman.
             try {
                 const result = await pntsApi('/api/data', { method: 'GET' });
                 if (result.data && Object.keys(result.data).length) {
@@ -750,7 +795,7 @@
                 }
                 pntsCloudReady = true;
             } catch (err) {
-                console.error('Gagal mengambil data publik dari database:', err);
+                console.warn('Sinkronisasi data online ditunda; cache lokal tetap ditampilkan:', err);
                 pntsCloudReady = false;
             }
         }
@@ -1441,7 +1486,7 @@
                                     <div class="min-w-0">
                                         <span class="inline-block px-2.5 py-0.5 rounded-md bg-gorga-600/20 text-red-300 text-[11px] font-bold uppercase tracking-wider mb-1">${escapeHtml(p.role)}</span>
                                         <h4 class="text-base font-bold text-white truncate">${escapeHtml(p.name)}</h4>
-                                        <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(p.marga)} ${p.period ? 'â€¢ ' + escapeHtml(p.period) : ''}</p>
+                                        <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(p.marga)} ${p.period ? 'Ã¢â‚¬Â¢ ' + escapeHtml(p.period) : ''}</p>
                                     </div>
                                 </div>
                             `).join('')}
@@ -1674,7 +1719,7 @@
                                                 </div>
                                                 <div>
                                                     <h4 class="text-sm font-bold text-white">${escapeHtml(rev.name)}</h4>
-                                                    <p class="text-xs text-slate-400">${escapeHtml(rev.role || 'Pengunjung')} â€¢ ${formatDateIndo(rev.date)}</p>
+                                                    <p class="text-xs text-slate-400">${escapeHtml(rev.role || 'Pengunjung')} Ã¢â‚¬Â¢ ${formatDateIndo(rev.date)}</p>
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-0.5 shrink-0">
@@ -1892,8 +1937,8 @@
                         </div>
 
                         <div class="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-                            <p>&copy; ${new Date().getFullYear()} ${escapeHtml(s.orgName)} â€” ${escapeHtml(s.orgSubtitle)}. Horas!</p>
-                            <p>Togatorop â€¢ Sianturi â€¢ Siburian â€¢ Boru â€¢ Bere</p>
+                            <p>&copy; ${new Date().getFullYear()} ${escapeHtml(s.orgName)} Ã¢â‚¬â€ ${escapeHtml(s.orgSubtitle)}. Horas!</p>
+                            <p>Togatorop Ã¢â‚¬Â¢ Sianturi Ã¢â‚¬Â¢ Siburian Ã¢â‚¬Â¢ Boru Ã¢â‚¬Â¢ Bere</p>
                         </div>
                     </div>
                 </footer>
@@ -2170,17 +2215,17 @@
                 `*HORAS! PENDAFTARAN ANGGOTA BARU*`,
                 `_${appData.settings.orgName}_`,
                 ``,
-                `â€¢ *Nama Lengkap:* ${newMember.name}`,
-                `â€¢ *Jenis Kelamin:* ${newMember.gender}`,
-                `â€¢ *Status:* ${newMember.status}`,
-                `â€¢ *Marga / Sub-Marga:* ${newMember.marga}`,
-                `â€¢ *Tubuni Br.:* ${newMember.tubuniBr}`,
-                `â€¢ *Asal (Huta):* ${newMember.huta}`,
-                `â€¢ *Aktivitas:* ${newMember.activity}`,
-                `â€¢ *Sektor Domisili:* ${newMember.sector}`,
-                `â€¢ *No. WhatsApp:* ${newMember.whatsapp}`,
-                `â€¢ *Alasan Bergabung:* ${newMember.reason}`,
-                `â€¢ *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
+                `Ã¢â‚¬Â¢ *Nama Lengkap:* ${newMember.name}`,
+                `Ã¢â‚¬Â¢ *Jenis Kelamin:* ${newMember.gender}`,
+                `Ã¢â‚¬Â¢ *Status:* ${newMember.status}`,
+                `Ã¢â‚¬Â¢ *Marga / Sub-Marga:* ${newMember.marga}`,
+                `Ã¢â‚¬Â¢ *Tubuni Br.:* ${newMember.tubuniBr}`,
+                `Ã¢â‚¬Â¢ *Asal (Huta):* ${newMember.huta}`,
+                `Ã¢â‚¬Â¢ *Aktivitas:* ${newMember.activity}`,
+                `Ã¢â‚¬Â¢ *Sektor Domisili:* ${newMember.sector}`,
+                `Ã¢â‚¬Â¢ *No. WhatsApp:* ${newMember.whatsapp}`,
+                `Ã¢â‚¬Â¢ *Alasan Bergabung:* ${newMember.reason}`,
+                `Ã¢â‚¬Â¢ *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
                 ``,
                 `Mohon verifikasi di Portal Admin. Mauliate!`
             ].join('\n');
@@ -2223,7 +2268,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} â€¢ WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} Ã¢â‚¬Â¢ WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
@@ -2310,7 +2355,7 @@
                         <p><strong class="text-slate-400">Marga/Status:</strong> ${escapeHtml(member.marga)} (${escapeHtml(member.status)})</p>
                         <p><strong class="text-slate-400">Tubuni Br.:</strong> ${escapeHtml(member.tubuniBr)}</p>
                         <p><strong class="text-slate-400">Asal (Huta):</strong> ${escapeHtml(member.huta)}</p>
-                        <p><strong class="text-slate-400">Aktivitas:</strong> ${escapeHtml(member.activity)} â€¢ ${escapeHtml(member.gender)}</p>
+                        <p><strong class="text-slate-400">Aktivitas:</strong> ${escapeHtml(member.activity)} Ã¢â‚¬Â¢ ${escapeHtml(member.gender)}</p>
                         <p><strong class="text-slate-400">Sektor:</strong> ${escapeHtml(member.sector)}</p>
                     </div>
                 </div>
@@ -2653,6 +2698,7 @@
             currentAdminTab = tab;
             toggleAdminMobileSidebar(false);
             renderAdminDashboard();
+            window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
         }
 
         function renderAdminDashboard() {
@@ -2795,7 +2841,7 @@
                                     <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</p>
-                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.status)} â€¢ ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} Ã¢â‚¬Â¢ ${escapeHtml(m.status)} Ã¢â‚¬Â¢ ${escapeHtml(m.sector)}</p>
                                         </div>
                                         <div class="flex items-center gap-1.5 shrink-0">
                                             <button onclick="approveMember('${m.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition">Setujui</button>
@@ -3100,10 +3146,10 @@
                                                 <h4 class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</h4>
                                                 <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase shrink-0 ${getStatusBadgeClass(m.status)}">${escapeHtml(m.status)}</span>
                                             </div>
-                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.gender || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} â€¢ Huta: ${escapeHtml(m.huta || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} â€¢ Sektor: ${escapeHtml(m.sector)}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} â€¢ Daftar: ${formatDateIndo(m.joinedAt)}</p>
+                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} Ã¢â‚¬Â¢ ${escapeHtml(m.gender || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} Ã¢â‚¬Â¢ Huta: ${escapeHtml(m.huta || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} Ã¢â‚¬Â¢ Sektor: ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} Ã¢â‚¬Â¢ Daftar: ${formatDateIndo(m.joinedAt)}</p>
                                             ${m.reason ? `<p class="text-[11px] text-slate-300 mt-1.5 italic bg-white/5 p-2 rounded-lg">"${escapeHtml(m.reason)}"</p>` : ''}
                                         </div>
                                     </div>
@@ -3175,8 +3221,8 @@
                                                 ${m.photo ? `<img src="${m.photo}" class="w-9 h-11 rounded-lg object-cover border border-white/15 shrink-0">` : ''}
                                                 <div>
                                                     <p class="font-bold text-white">${escapeHtml(m.name)}</p>
-                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? 'â€¢ Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
-                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} â€¢ ${escapeHtml(m.activity || '-')}</p>` : ''}
+                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? 'Ã¢â‚¬Â¢ Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
+                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} Ã¢â‚¬Â¢ ${escapeHtml(m.activity || '-')}</p>` : ''}
                                                 </div>
                                             </div>
                                         </td>
@@ -3327,7 +3373,7 @@
                                 </div>
                                 <h4 class="text-base font-bold text-white">${escapeHtml(ev.title)}</h4>
                                 <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">${escapeHtml(ev.description)}</p>
-                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} â€¢ <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
+                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} Ã¢â‚¬Â¢ <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
                             </div>
                             <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
                                 <button onclick="openEventModal('${ev.id}')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-emas-500/20 text-xs font-semibold text-slate-200 hover:text-emas-300 transition">Edit</button>
@@ -3741,7 +3787,7 @@
                                         <div class="min-w-0">
                                             <span class="text-[11px] font-bold uppercase text-emas-400">${escapeHtml(p.role)}</span>
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(p.name)}</p>
-                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? 'â€¢ ' + escapeHtml(p.period) : ''}</p>
+                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? 'Ã¢â‚¬Â¢ ' + escapeHtml(p.period) : ''}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1 shrink-0">
@@ -4054,7 +4100,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 19px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} â€¢ WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} Ã¢â‚¬Â¢ WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
@@ -4777,7 +4823,7 @@
         // 11. INITIALIZE APPLICATION ON LOAD
         // =====================================================================
         document.addEventListener('DOMContentLoaded', () => {
-            initLenisSmoothScroll();
+            // Render data cache lokal terlebih dahulu; scroll native tetap aktif pada semua menu.
 
             const modalOverlay = document.getElementById('modal-overlay');
             if (modalOverlay) {
