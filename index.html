@@ -404,6 +404,10 @@
         // 1. CONSTANTS & REALISTIC SEED DATA (PUNGUAN TOGA NAPOSO SIMATUPANG)
         // =====================================================================
         const STORAGE_KEY = 'punguan_toga_naposo_simatupang_v1';
+        const PNTS_API_BASE = 'https://polished-tooth-6e33.marelihulu88.workers.dev';
+        let pntsAdminToken = sessionStorage.getItem('pnts_admin_token') || '';
+        let pntsCloudReady = false;
+        let pntsCloudSaveTimer = null;
 
         const DEFAULT_DATA = {
             adminAuth: {
@@ -414,7 +418,7 @@
                 orgName: 'Punguan Naposo Toga Simatupang Se-Duri',
                 orgSubtitle: 'Anak - Boru - dohot Bere',
                 motto: 'Horas! Sada Roha, Sada Pikkiran, Marsiurupan',
-                heroDesc: 'Wadah persatuan dan kekeluargaan generasi muda (Naposo) keturunan Toga Simatupang Se-Duri — Togatorop, Sianturi, dan Siburian — beserta Anak - Boru - dohot Bere untuk saling menopang dalam adat, iman, dan karya.',
+                heroDesc: 'Wadah persatuan dan kekeluargaan generasi muda (Naposo) keturunan Toga Simatupang Se-Duri â€” Togatorop, Sianturi, dan Siburian â€” beserta Anak - Boru - dohot Bere untuk saling menopang dalam adat, iman, dan karya.',
                 tickerText: 'HORAS! Undangan Partangiangan Bulanan & Arisan Punguan Naposo Toga Simatupang Se-Duri pada Minggu, 14 Desember 2026 pukul 15.00 WIB di Sektor Pusat. Diharapkan kehadiran seluruh Anak - Boru - dohot Bere!',
                 maintenanceMessage: 'Horas! Situs resmi Punguan Naposo Toga Simatupang Se-Duri Anak - Boru - dohot Bere sedang dalam pemeliharaan berkala oleh pengurus. Silakan kembali beberapa saat lagi atau hubungi Sekretaris Punguan via WhatsApp.',
                 address: 'Sekretariat Punguan Naposo Toga Simatupang Se-Duri, Kota Duri, Kab. Bengkalis, Riau',
@@ -663,88 +667,111 @@
             }
         }
 
-        /**
-         * Saves current appData to localStorage and syncs automatically to Google Sheets when in GAS.
-         */
+        /** Local cache + Cloudflare/Apps Script synchronization. */
         function saveData(skipCloud = false) {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
             } catch (err) {
-                console.error('Gagal menyimpan data ke localStorage:', err);
-                showToast('Gagal menyimpan data ke penyimpanan browser.', 'error');
+                console.error('Gagal menyimpan data ke penyimpanan browser:', err);
+                showToast('Gagal menyimpan data di browser.', 'error');
             }
-
-            if (!skipCloud && isGasEnvironment()) {
-                scheduleCloudSave();
-            }
+            if (!skipCloud && pntsAdminToken) scheduleCloudSave();
         }
 
-        /**
-         * Debounced cloud sync to Google Apps Script (Code.gs -> saveAppData).
-         */
-        function scheduleCloudSave(immediate = false) {
-            if (!isGasEnvironment()) return;
-            if (gasSaveTimer) clearTimeout(gasSaveTimer);
+        async function pntsApi(path, options = {}) {
+            const headers = { ...(options.headers || {}) };
+            if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+            if (pntsAdminToken) headers.Authorization = 'Bearer ' + pntsAdminToken;
+            const response = await fetch(PNTS_API_BASE + path, { ...options, headers });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.success === false) {
+                throw new Error(result.message || ('Permintaan API gagal (' + response.status + ').'));
+            }
+            return result;
+        }
 
-            const runSync = () => {
-                isCloudSyncing = true;
+        async function uploadDataUrlToDrive(dataUrl, category, name) {
+            if (!/^data:image\/(jpeg|png|webp);base64,/i.test(dataUrl)) return dataUrl;
+            const comma = dataUrl.indexOf(',');
+            const mime = (dataUrl.match(/^data:([^;]+);base64,/i) || [])[1] || 'image/jpeg';
+            const result = await pntsApi('/api/upload', {
+                method: 'POST',
+                body: JSON.stringify({ base64: dataUrl.slice(comma + 1), mimeType: mime, category, name })
+            });
+            if (!result.url) throw new Error('Upload foto berhasil dipanggil tetapi URL foto tidak diterima.');
+            return result.url;
+        }
+
+        async function prepareCloudData(source) {
+            const data = JSON.parse(JSON.stringify(source));
+            delete data.adminAuth;
+            for (const member of (data.members || [])) {
+                if (member.photo && member.photo.startsWith('data:image/')) member.photo = await uploadDataUrlToDrive(member.photo, 'ANGGOTA', member.name || member.id || 'anggota');
+            }
+            for (const person of (data.bph || [])) {
+                if (person.photo && person.photo.startsWith('data:image/')) person.photo = await uploadDataUrlToDrive(person.photo, 'PENGURUS', person.name || person.id || 'pengurus');
+            }
+            for (const album of (data.albums || [])) {
+                if (album.image && album.image.startsWith('data:image/')) album.image = await uploadDataUrlToDrive(album.image, 'GALERI', album.title || album.id || 'galeri');
+            }
+            if (data.settings?.customLogo?.startsWith('data:image/')) data.settings.customLogo = await uploadDataUrlToDrive(data.settings.customLogo, 'GALERI', 'logo-pnts-duri');
+            return data;
+        }
+
+        function scheduleCloudSave() {
+            if (!pntsAdminToken) return;
+            if (pntsCloudSaveTimer) clearTimeout(pntsCloudSaveTimer);
+            pntsCloudSaveTimer = setTimeout(async () => {
                 try {
-                    google.script.run
-                        .withSuccessHandler((res) => {
-                            isCloudSyncing = false;
-                            if (res && res.success === false) {
-                                console.error('GAS saveAppData error:', res.message);
-                                showToast('Sinkronisasi Google Sheets gagal: ' + res.message, 'error');
-                            }
-                        })
-                        .withFailureHandler((err) => {
-                            isCloudSyncing = false;
-                            console.error('GAS saveAppData failure:', err);
-                            showToast('Gagal terhubung ke Google Sheets saat menyimpan data.', 'error');
-                        })
-                        .saveAppData(JSON.stringify(appData));
+                    isCloudSyncing = true;
+                    const cloudData = await prepareCloudData(appData);
+                    const result = await pntsApi('/api/data', { method: 'PUT', body: JSON.stringify({ data: cloudData }) });
+                    // Ganti Data URL lokal menjadi URL Drive setelah berhasil diunggah.
+                    appData = mergeWithDefaultData(cloudData);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+                    isCloudSyncing = false;
+                    console.info('PNTS DURI tersinkron ke Spreadsheet:', result);
+                    showToast('Perubahan berhasil disimpan ke database.', 'success');
                 } catch (err) {
                     isCloudSyncing = false;
-                    console.error('GAS run error:', err);
+                    console.error('Sinkronisasi database gagal:', err);
+                    showToast('Gagal menyimpan ke database: ' + err.message, 'error');
                 }
-            };
-
-            if (immediate) runSync();
-            else gasSaveTimer = setTimeout(runSync, 450);
+            }, 700);
         }
 
-        /**
-         * Fetches latest database state from Google Sheets on startup (Code.gs -> getAppData).
-         */
-        function syncFromGoogleSheets(showNotif = false) {
-            if (!isGasEnvironment()) return;
+        async function syncPublicFromCloud() {
             try {
-                google.script.run
-                    .withSuccessHandler((jsonStr) => {
-                        if (jsonStr && typeof jsonStr === 'string' && jsonStr.trim()) {
-                            try {
-                                const parsed = JSON.parse(jsonStr);
-                                appData = mergeWithDefaultData(parsed);
-                                saveData(true); // Update cache lokal tanpa loop kirim balik
-                                if (currentView === 'public') renderPublicPortal();
-                                else if (currentView === 'admin') renderAdminDashboard();
-                                if (showNotif) showToast('Data berhasil disinkronkan dari Google Sheets.', 'success');
-                            } catch (parseErr) {
-                                console.error('Gagal parsing JSON dari Google Sheets:', parseErr);
-                            }
-                        } else {
-                            // Database Google Sheets masih kosong -> unggah data awal otomatis
-                            scheduleCloudSave(true);
-                        }
-                    })
-                    .withFailureHandler((err) => {
-                        console.error('Gagal memuat data dari Google Sheets:', err);
-                        if (showNotif) showToast('Gagal memuat data dari Google Sheets.', 'error');
-                    })
-                    .getAppData();
+                const result = await pntsApi('/api/data', { method: 'GET' });
+                if (result.data && Object.keys(result.data).length) {
+                    appData = mergeWithDefaultData({ ...appData, ...result.data });
+                    saveData(true);
+                    if (currentView === 'public') renderPublicPortal();
+                }
+                pntsCloudReady = true;
             } catch (err) {
-                console.error('GAS getAppData error:', err);
+                console.error('Gagal mengambil data publik dari database:', err);
+                pntsCloudReady = false;
             }
+        }
+
+        async function loadAdminDatabaseOrMigrate() {
+            const result = await pntsApi('/api/data', { method: 'GET' });
+            const serverData = result.data || {};
+            if (Object.keys(serverData).length === 0) {
+                // Database kosong: pindahkan data lokal yang sudah ada, bukan menggantinya dengan data kosong.
+                const initial = JSON.parse(JSON.stringify(appData));
+                const cloudData = await prepareCloudData(initial);
+                await pntsApi('/api/data', { method: 'PUT', body: JSON.stringify({ data: cloudData }) });
+                appData = mergeWithDefaultData(cloudData);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+                showToast('Data lama berhasil dipindahkan ke database PNTS DURI.', 'success');
+            } else {
+                appData = mergeWithDefaultData({ ...DEFAULT_DATA, ...serverData });
+                saveData(true);
+                showToast('Data terbaru berhasil dimuat dari database.', 'success');
+            }
+            pntsCloudReady = true;
         }
 
         // Listen for cross-tab localStorage updates for true multi-tab real-time sync
@@ -1414,7 +1441,7 @@
                                     <div class="min-w-0">
                                         <span class="inline-block px-2.5 py-0.5 rounded-md bg-gorga-600/20 text-red-300 text-[11px] font-bold uppercase tracking-wider mb-1">${escapeHtml(p.role)}</span>
                                         <h4 class="text-base font-bold text-white truncate">${escapeHtml(p.name)}</h4>
-                                        <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(p.marga)} ${p.period ? '• ' + escapeHtml(p.period) : ''}</p>
+                                        <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(p.marga)} ${p.period ? 'â€¢ ' + escapeHtml(p.period) : ''}</p>
                                     </div>
                                 </div>
                             `).join('')}
@@ -1647,7 +1674,7 @@
                                                 </div>
                                                 <div>
                                                     <h4 class="text-sm font-bold text-white">${escapeHtml(rev.name)}</h4>
-                                                    <p class="text-xs text-slate-400">${escapeHtml(rev.role || 'Pengunjung')} • ${formatDateIndo(rev.date)}</p>
+                                                    <p class="text-xs text-slate-400">${escapeHtml(rev.role || 'Pengunjung')} â€¢ ${formatDateIndo(rev.date)}</p>
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-0.5 shrink-0">
@@ -1865,8 +1892,8 @@
                         </div>
 
                         <div class="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-                            <p>&copy; ${new Date().getFullYear()} ${escapeHtml(s.orgName)} — ${escapeHtml(s.orgSubtitle)}. Horas!</p>
-                            <p>Togatorop • Sianturi • Siburian • Boru • Bere</p>
+                            <p>&copy; ${new Date().getFullYear()} ${escapeHtml(s.orgName)} â€” ${escapeHtml(s.orgSubtitle)}. Horas!</p>
+                            <p>Togatorop â€¢ Sianturi â€¢ Siburian â€¢ Boru â€¢ Bere</p>
                         </div>
                     </div>
                 </footer>
@@ -2143,17 +2170,17 @@
                 `*HORAS! PENDAFTARAN ANGGOTA BARU*`,
                 `_${appData.settings.orgName}_`,
                 ``,
-                `• *Nama Lengkap:* ${newMember.name}`,
-                `• *Jenis Kelamin:* ${newMember.gender}`,
-                `• *Status:* ${newMember.status}`,
-                `• *Marga / Sub-Marga:* ${newMember.marga}`,
-                `• *Tubuni Br.:* ${newMember.tubuniBr}`,
-                `• *Asal (Huta):* ${newMember.huta}`,
-                `• *Aktivitas:* ${newMember.activity}`,
-                `• *Sektor Domisili:* ${newMember.sector}`,
-                `• *No. WhatsApp:* ${newMember.whatsapp}`,
-                `• *Alasan Bergabung:* ${newMember.reason}`,
-                `• *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
+                `â€¢ *Nama Lengkap:* ${newMember.name}`,
+                `â€¢ *Jenis Kelamin:* ${newMember.gender}`,
+                `â€¢ *Status:* ${newMember.status}`,
+                `â€¢ *Marga / Sub-Marga:* ${newMember.marga}`,
+                `â€¢ *Tubuni Br.:* ${newMember.tubuniBr}`,
+                `â€¢ *Asal (Huta):* ${newMember.huta}`,
+                `â€¢ *Aktivitas:* ${newMember.activity}`,
+                `â€¢ *Sektor Domisili:* ${newMember.sector}`,
+                `â€¢ *No. WhatsApp:* ${newMember.whatsapp}`,
+                `â€¢ *Alasan Bergabung:* ${newMember.reason}`,
+                `â€¢ *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
                 ``,
                 `Mohon verifikasi di Portal Admin. Mauliate!`
             ].join('\n');
@@ -2196,7 +2223,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} • WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} â€¢ WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
@@ -2283,7 +2310,7 @@
                         <p><strong class="text-slate-400">Marga/Status:</strong> ${escapeHtml(member.marga)} (${escapeHtml(member.status)})</p>
                         <p><strong class="text-slate-400">Tubuni Br.:</strong> ${escapeHtml(member.tubuniBr)}</p>
                         <p><strong class="text-slate-400">Asal (Huta):</strong> ${escapeHtml(member.huta)}</p>
-                        <p><strong class="text-slate-400">Aktivitas:</strong> ${escapeHtml(member.activity)} • ${escapeHtml(member.gender)}</p>
+                        <p><strong class="text-slate-400">Aktivitas:</strong> ${escapeHtml(member.activity)} â€¢ ${escapeHtml(member.gender)}</p>
                         <p><strong class="text-slate-400">Sektor:</strong> ${escapeHtml(member.sector)}</p>
                     </div>
                 </div>
@@ -2566,30 +2593,42 @@
         // 8. ADMIN AUTHENTICATION LOGIC
         // =====================================================================
         function fillDemoCredentials() {
-            document.getElementById('login-username').value = appData.adminAuth.username;
-            document.getElementById('login-password').value = appData.adminAuth.password;
-            showToast('Akun demo terisi otomatis. Klik "Masuk ke Panel Admin".', 'info');
+            showToast('Masukkan username dan password admin yang sudah disimpan di Cloudflare.', 'info');
         }
 
-        function handleAdminLoginSubmit(e) {
+        async function handleAdminLoginSubmit(e) {
             e.preventDefault();
             const u = document.getElementById('login-username').value.trim();
             const p = document.getElementById('login-password').value;
-
-            if (u === appData.adminAuth.username && p === appData.adminAuth.password) {
+            const errorBox = document.getElementById('login-error-msg');
+            try {
+                const response = await fetch(PNTS_API_BASE + '/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success || !result.token) throw new Error(result.message || 'Username atau password salah.');
+                pntsAdminToken = result.token;
+                sessionStorage.setItem('pnts_admin_token', pntsAdminToken);
+                await loadAdminDatabaseOrMigrate();
                 isAdminLoggedIn = true;
-                document.getElementById('login-error-msg').classList.add('hidden');
+                errorBox.classList.add('hidden');
                 e.target.reset();
-                showToast('Berhasil masuk ke Panel Admin!', 'success');
+                showToast('Login berhasil. Database PNTS DURI tersambung.', 'success');
                 switchView('admin');
-            } else {
-                document.getElementById('login-error-msg').classList.remove('hidden');
-                showToast('Username atau password tidak sesuai.', 'error');
+            } catch (err) {
+                pntsAdminToken = '';
+                sessionStorage.removeItem('pnts_admin_token');
+                errorBox.classList.remove('hidden');
+                showToast(err.message || 'Login gagal. Periksa koneksi dan akun admin Cloudflare.', 'error');
             }
         }
 
         function handleAdminLogout() {
             isAdminLoggedIn = false;
+            pntsAdminToken = '';
+            sessionStorage.removeItem('pnts_admin_token');
             toggleAdminMobileSidebar(false);
             showToast('Anda telah keluar dari Panel Admin.', 'info');
             switchView('public');
@@ -2756,7 +2795,7 @@
                                     <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</p>
-                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} • ${escapeHtml(m.status)} • ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.status)} â€¢ ${escapeHtml(m.sector)}</p>
                                         </div>
                                         <div class="flex items-center gap-1.5 shrink-0">
                                             <button onclick="approveMember('${m.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition">Setujui</button>
@@ -3061,10 +3100,10 @@
                                                 <h4 class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</h4>
                                                 <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase shrink-0 ${getStatusBadgeClass(m.status)}">${escapeHtml(m.status)}</span>
                                             </div>
-                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} • ${escapeHtml(m.gender || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} • Huta: ${escapeHtml(m.huta || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} • Sektor: ${escapeHtml(m.sector)}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} • Daftar: ${formatDateIndo(m.joinedAt)}</p>
+                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.gender || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} â€¢ Huta: ${escapeHtml(m.huta || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} â€¢ Sektor: ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} â€¢ Daftar: ${formatDateIndo(m.joinedAt)}</p>
                                             ${m.reason ? `<p class="text-[11px] text-slate-300 mt-1.5 italic bg-white/5 p-2 rounded-lg">"${escapeHtml(m.reason)}"</p>` : ''}
                                         </div>
                                     </div>
@@ -3136,8 +3175,8 @@
                                                 ${m.photo ? `<img src="${m.photo}" class="w-9 h-11 rounded-lg object-cover border border-white/15 shrink-0">` : ''}
                                                 <div>
                                                     <p class="font-bold text-white">${escapeHtml(m.name)}</p>
-                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? '• Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
-                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} • ${escapeHtml(m.activity || '-')}</p>` : ''}
+                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? 'â€¢ Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
+                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} â€¢ ${escapeHtml(m.activity || '-')}</p>` : ''}
                                                 </div>
                                             </div>
                                         </td>
@@ -3288,7 +3327,7 @@
                                 </div>
                                 <h4 class="text-base font-bold text-white">${escapeHtml(ev.title)}</h4>
                                 <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">${escapeHtml(ev.description)}</p>
-                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} • <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
+                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} â€¢ <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
                             </div>
                             <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
                                 <button onclick="openEventModal('${ev.id}')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-emas-500/20 text-xs font-semibold text-slate-200 hover:text-emas-300 transition">Edit</button>
@@ -3702,7 +3741,7 @@
                                         <div class="min-w-0">
                                             <span class="text-[11px] font-bold uppercase text-emas-400">${escapeHtml(p.role)}</span>
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(p.name)}</p>
-                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? '• ' + escapeHtml(p.period) : ''}</p>
+                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? 'â€¢ ' + escapeHtml(p.period) : ''}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1 shrink-0">
@@ -4015,7 +4054,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 19px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} • WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} â€¢ WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
@@ -4481,22 +4520,7 @@
 
         function handleChangePassword(e) {
             e.preventDefault();
-            const oldPw = document.getElementById('pw-old').value;
-            const newPw = document.getElementById('pw-new').value;
-            const confirmPw = document.getElementById('pw-confirm').value;
-
-            if (oldPw !== appData.adminAuth.password) {
-                showToast('Password lama tidak sesuai.', 'error');
-                return;
-            }
-            if (newPw !== confirmPw) {
-                showToast('Konfirmasi password baru tidak cocok.', 'error');
-                return;
-            }
-            appData.adminAuth.password = newPw;
-            saveData();
-            e.target.reset();
-            showToast('Password Admin berhasil diperbarui!', 'success');
+            showToast('Password admin dikelola melalui Cloudflare Worker Secrets. Ubah ADMIN_PASSWORD di Cloudflare, lalu login kembali.', 'info');
         }
 
         function exportDataJson() {
@@ -4769,10 +4793,8 @@
 
             switchView('public');
 
-            // Jika dijalankan sebagai Web App Google Apps Script, tarik data terbaru dari Google Sheets
-            if (isGasEnvironment()) {
-                syncFromGoogleSheets(false);
-            }
+            // Ambil data publik terbaru dari database melalui Cloudflare Worker.
+            syncPublicFromCloud();
         });
     </script>
 </body>
