@@ -785,14 +785,10 @@
                     throw new Error(saved.message || 'Server belum mengonfirmasi penyimpanan.');
                 }
 
-                // Baca ulang dari server. Ini memastikan data benar-benar sudah masuk Spreadsheet.
-                const check = await pntsApi('/api/data', { method: 'GET' });
-                const serverData = check.data || {};
-                const expectedMembers = JSON.stringify(cloudData.members || []);
-                const actualMembers = JSON.stringify(serverData.members || []);
-                if (expectedMembers !== actualMembers) {
-                    throw new Error('Data anggota belum sama dengan database server. Silakan coba simpan lagi.');
-                }
+                // Code.gs sudah melakukan verifikasi baca-ulang terhadap APP_DATA
+                // sebelum mengirim success:true. Tidak perlu GET seluruh database sekali lagi
+                // dari browser karena itu membuat proses simpan menjadi jauh lebih lambat.
+                // Respons sukses dari Worker hanya diterima setelah Code.gs selesai memverifikasi.
 
                 // Jangan timpa perubahan baru yang dibuat saat proses upload/simpan berlangsung.
                 if (revisionAtStart === pntsLocalRevision) {
