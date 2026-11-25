@@ -445,6 +445,8 @@
         let pntsAdminToken = sessionStorage.getItem('pnts_admin_token') || '';
         let pntsCloudReady = false;
         let pntsCloudSaveTimer = null;
+        let pntsCloudSaveQueue = Promise.resolve();
+        let pntsLocalRevision = 0;
 
         const DEFAULT_DATA = {
             adminAuth: {
@@ -455,7 +457,7 @@
                 orgName: 'Punguan Naposo Toga Simatupang Se-Duri',
                 orgSubtitle: 'Anak - Boru - dohot Bere',
                 motto: 'Horas! Sada Roha, Sada Pikkiran, Marsiurupan',
-                heroDesc: 'Wadah persatuan dan kekeluargaan generasi muda (Naposo) keturunan Toga Simatupang Se-Duri Ã¢â‚¬â€ Togatorop, Sianturi, dan Siburian Ã¢â‚¬â€ beserta Anak - Boru - dohot Bere untuk saling menopang dalam adat, iman, dan karya.',
+                heroDesc: 'Wadah persatuan dan kekeluargaan generasi muda (Naposo) keturunan Toga Simatupang Se-Duri ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Togatorop, Sianturi, dan Siburian ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â beserta Anak - Boru - dohot Bere untuk saling menopang dalam adat, iman, dan karya.',
                 tickerText: 'HORAS! Undangan Partangiangan Bulanan & Arisan Punguan Naposo Toga Simatupang Se-Duri pada Minggu, 14 Desember 2026 pukul 15.00 WIB di Sektor Pusat. Diharapkan kehadiran seluruh Anak - Boru - dohot Bere!',
                 maintenanceMessage: 'Horas! Situs resmi Punguan Naposo Toga Simatupang Se-Duri Anak - Boru - dohot Bere sedang dalam pemeliharaan berkala oleh pengurus. Silakan kembali beberapa saat lagi atau hubungi Sekretaris Punguan via WhatsApp.',
                 address: 'Sekretariat Punguan Naposo Toga Simatupang Se-Duri, Kota Duri, Kab. Bengkalis, Riau',
@@ -712,7 +714,10 @@
                 console.error('Gagal menyimpan data ke penyimpanan browser:', err);
                 showToast('Gagal menyimpan data di browser.', 'error');
             }
-            if (!skipCloud && pntsAdminToken) scheduleCloudSave();
+            if (!skipCloud) {
+                pntsLocalRevision++;
+                if (pntsAdminToken) scheduleCloudSave();
+            }
         }
 
         async function pntsApi(path, options = {}) {
@@ -759,22 +764,66 @@
             return data;
         }
 
+        async function flushCloudSave() {
+            if (!pntsAdminToken) throw new Error('Sesi admin tidak aktif. Silakan masuk kembali.');
+            if (pntsCloudSaveTimer) {
+                clearTimeout(pntsCloudSaveTimer);
+                pntsCloudSaveTimer = null;
+            }
+
+            const task = async () => {
+                isCloudSyncing = true;
+                const revisionAtStart = pntsLocalRevision;
+                // Ambil snapshot terbaru ketika giliran simpan tiba, bukan ketika timer dibuat.
+                const snapshot = JSON.parse(JSON.stringify(appData));
+                const cloudData = await prepareCloudData(snapshot);
+                const saved = await pntsApi('/api/data', {
+                    method: 'PUT',
+                    body: JSON.stringify({ data: cloudData })
+                });
+                if (saved.success !== true) {
+                    throw new Error(saved.message || 'Server belum mengonfirmasi penyimpanan.');
+                }
+
+                // Baca ulang dari server. Ini memastikan data benar-benar sudah masuk Spreadsheet.
+                const check = await pntsApi('/api/data', { method: 'GET' });
+                const serverData = check.data || {};
+                const expectedMembers = JSON.stringify(cloudData.members || []);
+                const actualMembers = JSON.stringify(serverData.members || []);
+                if (expectedMembers !== actualMembers) {
+                    throw new Error('Data anggota belum sama dengan database server. Silakan coba simpan lagi.');
+                }
+
+                // Jangan timpa perubahan baru yang dibuat saat proses upload/simpan berlangsung.
+                if (revisionAtStart === pntsLocalRevision) {
+                    appData = mergeWithDefaultData(cloudData);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+                } else {
+                    scheduleCloudSave();
+                }
+                console.info('PNTS DURI tersimpan dan diverifikasi di Spreadsheet:', saved);
+                return saved;
+            };
+
+            // Semua penulisan berjalan berurutan agar snapshot lama tidak menimpa snapshot baru.
+            const run = pntsCloudSaveQueue.catch(() => {}).then(task);
+            pntsCloudSaveQueue = run;
+            try {
+                return await run;
+            } finally {
+                isCloudSyncing = false;
+            }
+        }
+
         function scheduleCloudSave() {
             if (!pntsAdminToken) return;
             if (pntsCloudSaveTimer) clearTimeout(pntsCloudSaveTimer);
             pntsCloudSaveTimer = setTimeout(async () => {
+                pntsCloudSaveTimer = null;
                 try {
-                    isCloudSyncing = true;
-                    const cloudData = await prepareCloudData(appData);
-                    const result = await pntsApi('/api/data', { method: 'PUT', body: JSON.stringify({ data: cloudData }) });
-                    // Ganti Data URL lokal menjadi URL Drive setelah berhasil diunggah.
-                    appData = mergeWithDefaultData(cloudData);
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-                    isCloudSyncing = false;
-                    console.info('PNTS DURI tersinkron ke Spreadsheet:', result);
-                    showToast('Perubahan berhasil disimpan ke database.', 'success');
+                    await flushCloudSave();
+                    showToast('Perubahan berhasil disimpan dan diverifikasi di database.', 'success');
                 } catch (err) {
-                    isCloudSyncing = false;
                     console.error('Sinkronisasi database gagal:', err);
                     showToast('Gagal menyimpan ke database: ' + err.message, 'error');
                 }
@@ -1486,7 +1535,7 @@
                                     <div class="min-w-0">
                                         <span class="inline-block px-2.5 py-0.5 rounded-md bg-gorga-600/20 text-red-300 text-[11px] font-bold uppercase tracking-wider mb-1">${escapeHtml(p.role)}</span>
                                         <h4 class="text-base font-bold text-white truncate">${escapeHtml(p.name)}</h4>
-                                        <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(p.marga)} ${p.period ? 'Ã¢â‚¬Â¢ ' + escapeHtml(p.period) : ''}</p>
+                                        <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(p.marga)} ${p.period ? 'ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ' + escapeHtml(p.period) : ''}</p>
                                     </div>
                                 </div>
                             `).join('')}
@@ -1719,7 +1768,7 @@
                                                 </div>
                                                 <div>
                                                     <h4 class="text-sm font-bold text-white">${escapeHtml(rev.name)}</h4>
-                                                    <p class="text-xs text-slate-400">${escapeHtml(rev.role || 'Pengunjung')} Ã¢â‚¬Â¢ ${formatDateIndo(rev.date)}</p>
+                                                    <p class="text-xs text-slate-400">${escapeHtml(rev.role || 'Pengunjung')} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${formatDateIndo(rev.date)}</p>
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-0.5 shrink-0">
@@ -1937,8 +1986,8 @@
                         </div>
 
                         <div class="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-                            <p>&copy; ${new Date().getFullYear()} ${escapeHtml(s.orgName)} Ã¢â‚¬â€ ${escapeHtml(s.orgSubtitle)}. Horas!</p>
-                            <p>Togatorop Ã¢â‚¬Â¢ Sianturi Ã¢â‚¬Â¢ Siburian Ã¢â‚¬Â¢ Boru Ã¢â‚¬Â¢ Bere</p>
+                            <p>&copy; ${new Date().getFullYear()} ${escapeHtml(s.orgName)} ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ${escapeHtml(s.orgSubtitle)}. Horas!</p>
+                            <p>Togatorop ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Sianturi ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Siburian ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Boru ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Bere</p>
                         </div>
                     </div>
                 </footer>
@@ -2215,17 +2264,17 @@
                 `*HORAS! PENDAFTARAN ANGGOTA BARU*`,
                 `_${appData.settings.orgName}_`,
                 ``,
-                `Ã¢â‚¬Â¢ *Nama Lengkap:* ${newMember.name}`,
-                `Ã¢â‚¬Â¢ *Jenis Kelamin:* ${newMember.gender}`,
-                `Ã¢â‚¬Â¢ *Status:* ${newMember.status}`,
-                `Ã¢â‚¬Â¢ *Marga / Sub-Marga:* ${newMember.marga}`,
-                `Ã¢â‚¬Â¢ *Tubuni Br.:* ${newMember.tubuniBr}`,
-                `Ã¢â‚¬Â¢ *Asal (Huta):* ${newMember.huta}`,
-                `Ã¢â‚¬Â¢ *Aktivitas:* ${newMember.activity}`,
-                `Ã¢â‚¬Â¢ *Sektor Domisili:* ${newMember.sector}`,
-                `Ã¢â‚¬Â¢ *No. WhatsApp:* ${newMember.whatsapp}`,
-                `Ã¢â‚¬Â¢ *Alasan Bergabung:* ${newMember.reason}`,
-                `Ã¢â‚¬Â¢ *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
+                `ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ *Nama Lengkap:* ${newMember.name}`,
+                `ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ *Jenis Kelamin:* ${newMember.gender}`,
+                `ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ *Status:* ${newMember.status}`,
+                `ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ *Marga / Sub-Marga:* ${newMember.marga}`,
+                `ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ *Tubuni Br.:* ${newMember.tubuniBr}`,
+                `ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ *Asal (Huta):* ${newMember.huta}`,
+                `ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ *Aktivitas:* ${newMember.activity}`,
+                `ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ *Sektor Domisili:* ${newMember.sector}`,
+                `ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ *No. WhatsApp:* ${newMember.whatsapp}`,
+                `ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ *Alasan Bergabung:* ${newMember.reason}`,
+                `ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
                 ``,
                 `Mohon verifikasi di Portal Admin. Mauliate!`
             ].join('\n');
@@ -2268,7 +2317,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} Ã¢â‚¬Â¢ WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
@@ -2355,7 +2404,7 @@
                         <p><strong class="text-slate-400">Marga/Status:</strong> ${escapeHtml(member.marga)} (${escapeHtml(member.status)})</p>
                         <p><strong class="text-slate-400">Tubuni Br.:</strong> ${escapeHtml(member.tubuniBr)}</p>
                         <p><strong class="text-slate-400">Asal (Huta):</strong> ${escapeHtml(member.huta)}</p>
-                        <p><strong class="text-slate-400">Aktivitas:</strong> ${escapeHtml(member.activity)} Ã¢â‚¬Â¢ ${escapeHtml(member.gender)}</p>
+                        <p><strong class="text-slate-400">Aktivitas:</strong> ${escapeHtml(member.activity)} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${escapeHtml(member.gender)}</p>
                         <p><strong class="text-slate-400">Sektor:</strong> ${escapeHtml(member.sector)}</p>
                     </div>
                 </div>
@@ -2841,7 +2890,7 @@
                                     <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</p>
-                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} Ã¢â‚¬Â¢ ${escapeHtml(m.status)} Ã¢â‚¬Â¢ ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${escapeHtml(m.status)} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${escapeHtml(m.sector)}</p>
                                         </div>
                                         <div class="flex items-center gap-1.5 shrink-0">
                                             <button onclick="approveMember('${m.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition">Setujui</button>
@@ -3146,10 +3195,10 @@
                                                 <h4 class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</h4>
                                                 <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase shrink-0 ${getStatusBadgeClass(m.status)}">${escapeHtml(m.status)}</span>
                                             </div>
-                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} Ã¢â‚¬Â¢ ${escapeHtml(m.gender || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} Ã¢â‚¬Â¢ Huta: ${escapeHtml(m.huta || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} Ã¢â‚¬Â¢ Sektor: ${escapeHtml(m.sector)}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} Ã¢â‚¬Â¢ Daftar: ${formatDateIndo(m.joinedAt)}</p>
+                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${escapeHtml(m.gender || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Huta: ${escapeHtml(m.huta || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Sektor: ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Daftar: ${formatDateIndo(m.joinedAt)}</p>
                                             ${m.reason ? `<p class="text-[11px] text-slate-300 mt-1.5 italic bg-white/5 p-2 rounded-lg">"${escapeHtml(m.reason)}"</p>` : ''}
                                         </div>
                                     </div>
@@ -3221,8 +3270,8 @@
                                                 ${m.photo ? `<img src="${m.photo}" class="w-9 h-11 rounded-lg object-cover border border-white/15 shrink-0">` : ''}
                                                 <div>
                                                     <p class="font-bold text-white">${escapeHtml(m.name)}</p>
-                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? 'Ã¢â‚¬Â¢ Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
-                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} Ã¢â‚¬Â¢ ${escapeHtml(m.activity || '-')}</p>` : ''}
+                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? 'ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
+                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${escapeHtml(m.activity || '-')}</p>` : ''}
                                                 </div>
                                             </div>
                                         </td>
@@ -3318,8 +3367,10 @@
             `);
         }
 
-        function handleSaveMemberModal(e, editId) {
+        async function handleSaveMemberModal(e, editId) {
             e.preventDefault();
+            const submitButton = e.submitter || e.target.querySelector('button[type="submit"]');
+            if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Menyimpan...'; }
             const payload = {
                 name: document.getElementById('mod-m-name').value.trim(),
                 marga: document.getElementById('mod-m-marga').value.trim(),
@@ -3328,22 +3379,37 @@
                 sector: document.getElementById('mod-m-sector').value.trim()
             };
 
-            if (editId) {
-                const idx = appData.members.findIndex(m => m.id === editId);
-                if (idx !== -1) appData.members[idx] = { ...appData.members[idx], ...payload };
-                showToast('Data anggota berhasil diperbarui.', 'success');
-            } else {
-                appData.members.unshift({
-                    id: generateId('m'),
-                    ...payload,
-                    verification: 'verified',
-                    joinedAt: new Date().toISOString().split('T')[0]
-                });
-                showToast('Anggota baru berhasil ditambahkan & langsung aktif.', 'success');
+            const before = JSON.parse(JSON.stringify(appData.members || []));
+            try {
+                if (editId) {
+                    const idx = appData.members.findIndex(m => m.id === editId);
+                    if (idx !== -1) appData.members[idx] = { ...appData.members[idx], ...payload };
+                    else throw new Error('Anggota yang akan diedit tidak ditemukan.');
+                } else {
+                    appData.members.unshift({
+                        id: generateId('m'),
+                        ...payload,
+                        verification: 'verified',
+                        joinedAt: new Date().toISOString().split('T')[0]
+                    });
+                }
+
+                saveData();
+                if (!pntsAdminToken) throw new Error('Token admin tidak ditemukan. Silakan keluar lalu masuk kembali.');
+                await flushCloudSave();
+                closeModal();
+                renderAdminDashboard();
+                showToast(editId ? 'Data anggota berhasil diperbarui dan tersimpan di database.' : 'Anggota baru berhasil ditambahkan dan tersimpan di database.', 'success');
+            } catch (err) {
+                // Jangan biarkan data lokal seolah-olah sukses jika database menolak penyimpanan.
+                appData.members = before;
+                saveData(true);
+                renderAdminDashboard();
+                showToast('Anggota belum tersimpan ke database: ' + err.message, 'error');
+                console.error('Gagal menyimpan anggota PNTS:', err);
+            } finally {
+                if (submitButton) { submitButton.disabled = false; submitButton.textContent = 'Simpan'; }
             }
-            saveData();
-            closeModal();
-            renderAdminDashboard();
         }
 
         // --- ADMIN TAB 3: MANAJEMEN AGENDA & KEGIATAN (CRUD) ---
@@ -3373,7 +3439,7 @@
                                 </div>
                                 <h4 class="text-base font-bold text-white">${escapeHtml(ev.title)}</h4>
                                 <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">${escapeHtml(ev.description)}</p>
-                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} Ã¢â‚¬Â¢ <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
+                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
                             </div>
                             <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
                                 <button onclick="openEventModal('${ev.id}')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-emas-500/20 text-xs font-semibold text-slate-200 hover:text-emas-300 transition">Edit</button>
@@ -3787,7 +3853,7 @@
                                         <div class="min-w-0">
                                             <span class="text-[11px] font-bold uppercase text-emas-400">${escapeHtml(p.role)}</span>
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(p.name)}</p>
-                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? 'Ã¢â‚¬Â¢ ' + escapeHtml(p.period) : ''}</p>
+                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? 'ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ' + escapeHtml(p.period) : ''}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1 shrink-0">
@@ -4100,7 +4166,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 19px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} Ã¢â‚¬Â¢ WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
