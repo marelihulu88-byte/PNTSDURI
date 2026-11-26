@@ -12,6 +12,11 @@
     <meta name="googlebot" content="index, follow, max-image-preview:large">
     <link rel="canonical" href="https://pntsduri.my.id/">
     <meta name="theme-color" content="#09090B">
+    <!-- Favicon resmi PNTS DURI: ikon Gorga, bukan ikon globe bawaan browser -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.png">
+    <link rel="shortcut icon" href="/favicon.png">
+    <meta name="apple-mobile-web-app-title" content="PNTS DURI">
+
 
     <!-- Tampilan ketika tautan PNTS dibagikan -->
     <meta property="og:type" content="website">
@@ -916,6 +921,7 @@
         function saveData(skipCloud = false) {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+                updateSiteFavicon();
             } catch (err) {
                 console.error('Gagal menyimpan data ke penyimpanan browser:', err);
                 showToast('Gagal menyimpan data di browser.', 'error');
@@ -1037,6 +1043,7 @@
                 const result = await pntsApi('/api/data', { method: 'GET' });
                 if (result.data && Object.keys(result.data).length) {
                     appData = mergeWithDefaultData({ ...appData, ...result.data });
+                    updateSiteFavicon();
                     saveData(true);
                     if (currentView === 'public') renderPublicPortal();
                 }
@@ -1402,6 +1409,32 @@
         // =====================================================================
         // 5. SVG GORGA ORNAMENT COMPONENTS & DYNAMIC LOGO
         // =====================================================================
+
+        // Favicon browser mengikuti logo resmi yang diatur admin.
+        // Jika admin belum mengunggah logo, gunakan ikon Gorga PNTS dari /favicon.svg.
+        function updateSiteFavicon() {
+            try {
+                let icon = document.querySelector('link[rel~="icon"]');
+                if (!icon) {
+                    icon = document.createElement('link');
+                    icon.rel = 'icon';
+                    document.head.appendChild(icon);
+                }
+                const customLogo = appData && appData.settings && appData.settings.customLogo;
+                icon.type = customLogo && customLogo.startsWith('data:image/svg+xml') ? 'image/svg+xml' : '';
+                icon.href = customLogo || '/favicon.svg?v=2';
+                let shortcut = document.querySelector('link[rel="shortcut icon"]');
+                if (!shortcut) {
+                    shortcut = document.createElement('link');
+                    shortcut.rel = 'shortcut icon';
+                    document.head.appendChild(shortcut);
+                }
+                shortcut.href = customLogo || '/favicon.svg?v=2';
+            } catch (err) {
+                console.warn('Favicon PNTS belum dapat diperbarui:', err);
+            }
+        }
+
         function getGorgaLogoSVG(sizeClass = 'w-10 h-10') {
             if (appData.settings && appData.settings.customLogo) {
                 return `<img src="${appData.settings.customLogo}" alt="Logo Punguan" class="${sizeClass} rounded-xl object-cover border border-emas-500/50 bg-black/30 shrink-0 shadow-md">`;
@@ -3001,6 +3034,7 @@
             sessionStorage.removeItem('pnts_admin_token');
             toggleAdminMobileSidebar(false);
             showToast('Anda telah keluar dari Panel Admin.', 'info');
+            updateSiteFavicon();
             switchView('public');
         }
 
