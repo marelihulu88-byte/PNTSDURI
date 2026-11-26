@@ -212,6 +212,54 @@
             animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
+
+        /* Batak Toba Admin Login Loading Screen Animations */
+        @keyframes gorgaSpinCW {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes gorgaSpinCCW {
+            0% { transform: rotate(360deg); }
+            100% { transform: rotate(0deg); }
+        }
+        @keyframes gorgaPulseGlow {
+            0%, 100% { transform: scale(0.96); opacity: 0.55; }
+            50% { transform: scale(1.08); opacity: 0.95; }
+        }
+        @keyframes ulosFlow {
+            0% { background-position: 0px 0px; }
+            100% { background-position: 108px 0px; }
+        }
+        .animate-gorga-cw {
+            animation: gorgaSpinCW 16s linear infinite;
+            transform-origin: center;
+        }
+        .animate-gorga-ccw {
+            animation: gorgaSpinCCW 11s linear infinite;
+            transform-origin: center;
+        }
+        .animate-gorga-glow {
+            animation: gorgaPulseGlow 2.6s ease-in-out infinite;
+        }
+        .ulos-progress-fill {
+            background: repeating-linear-gradient(
+                90deg,
+                #DC2626 0px,
+                #DC2626 20px,
+                #18181B 20px,
+                #18181B 24px,
+                #F59E0B 24px,
+                #F59E0B 38px,
+                #FFFFFF 38px,
+                #FFFFFF 44px,
+                #18181B 44px,
+                #18181B 48px
+            );
+            background-size: 108px 100%;
+            animation: ulosFlow 1.4s linear infinite;
+            transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
         /* Print Layout for New Member Registration Form */
         @media print {
             body {
@@ -266,6 +314,127 @@
             </span>
             <i data-lucide="headset" class="w-6 h-6 text-emas-300 group-hover:text-white transition"></i>
         </button>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- BATAK TOBA THEMED ADMIN LOGIN LOADING SCREEN                          -->
+    <!-- ===================================================================== -->
+    <div id="batak-login-loader" class="fixed inset-0 z-[120] hidden bg-[#07070A]/95 backdrop-blur-xl flex flex-col justify-between overflow-hidden select-none">
+        <div class="ulos-strip shrink-0"></div>
+
+        <!-- Subtle Gorga Background Pattern & Radial Aura -->
+        <div class="absolute inset-0 gorga-bg-pattern opacity-80 pointer-events-none"></div>
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(220,38,38,0.22)_0%,rgba(245,158,11,0.08)_38%,rgba(7,7,10,0.95)_75%)] pointer-events-none"></div>
+
+        <!-- Four Traditional Batak Gorga Corner Ornaments -->
+        <svg class="w-16 h-16 sm:w-24 sm:h-24 text-emas-500/45 absolute top-5 left-5 pointer-events-none" viewBox="0 0 100 100" fill="none">
+            <path d="M6 94V24C6 14.0589 14.0589 6 24 6H94" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M18 82V30C18 23.3726 23.3726 18 30 18H82" stroke="#DC2626" stroke-width="2"/>
+            <path d="M24 24L38 38L24 52L10 38L24 24Z" stroke="#FBBF24" stroke-width="1.8" fill="#DC2626" fill-opacity="0.25"/>
+            <circle cx="24" cy="38" r="3" fill="#FFFFFF"/>
+        </svg>
+        <svg class="w-16 h-16 sm:w-24 sm:h-24 text-emas-500/45 absolute top-5 right-5 pointer-events-none -scale-x-100" viewBox="0 0 100 100" fill="none">
+            <path d="M6 94V24C6 14.0589 14.0589 6 24 6H94" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M18 82V30C18 23.3726 23.3726 18 30 18H82" stroke="#DC2626" stroke-width="2"/>
+            <path d="M24 24L38 38L24 52L10 38L24 24Z" stroke="#FBBF24" stroke-width="1.8" fill="#DC2626" fill-opacity="0.25"/>
+            <circle cx="24" cy="38" r="3" fill="#FFFFFF"/>
+        </svg>
+        <svg class="w-16 h-16 sm:w-24 sm:h-24 text-emas-500/45 absolute bottom-5 left-5 pointer-events-none -scale-y-100" viewBox="0 0 100 100" fill="none">
+            <path d="M6 94V24C6 14.0589 14.0589 6 24 6H94" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M18 82V30C18 23.3726 23.3726 18 30 18H82" stroke="#DC2626" stroke-width="2"/>
+            <path d="M24 24L38 38L24 52L10 38L24 24Z" stroke="#FBBF24" stroke-width="1.8" fill="#DC2626" fill-opacity="0.25"/>
+            <circle cx="24" cy="38" r="3" fill="#FFFFFF"/>
+        </svg>
+        <svg class="w-16 h-16 sm:w-24 sm:h-24 text-emas-500/45 absolute bottom-5 right-5 pointer-events-none scale-x-[-1] scale-y-[-1]" viewBox="0 0 100 100" fill="none">
+            <path d="M6 94V24C6 14.0589 14.0589 6 24 6H94" stroke="currentColor" stroke-width="2.5"/>
+            <path d="M18 82V30C18 23.3726 23.3726 18 30 18H82" stroke="#DC2626" stroke-width="2"/>
+            <path d="M24 24L38 38L24 52L10 38L24 24Z" stroke="#FBBF24" stroke-width="1.8" fill="#DC2626" fill-opacity="0.25"/>
+            <circle cx="24" cy="38" r="3" fill="#FFFFFF"/>
+        </svg>
+
+        <!-- Center Content -->
+        <div class="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center max-w-lg mx-auto w-full">
+            <!-- Animated Gorga & Dalihan Na Tolu Emblem -->
+            <div class="relative w-44 h-44 sm:w-52 sm:h-52 flex items-center justify-center mb-6">
+                <div class="absolute inset-4 rounded-full bg-gradient-to-tr from-gorga-600/35 via-emas-500/25 to-white/10 blur-xl animate-gorga-glow"></div>
+
+                <svg class="w-full h-full relative z-10" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Outer Gorga Mandala Ring (Clockwise) -->
+                    <g class="animate-gorga-cw">
+                        <circle cx="110" cy="110" r="98" stroke="#F59E0B" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="6 6"/>
+                        <circle cx="110" cy="110" r="88" stroke="#DC2626" stroke-opacity="0.65" stroke-width="2"/>
+                        <!-- 8 Gorga Diamond Points -->
+                        <polygon points="110,4 117,18 110,26 103,18" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1"/>
+                        <polygon points="110,216 117,202 110,194 103,202" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1"/>
+                        <polygon points="4,110 18,103 26,110 18,117" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1"/>
+                        <polygon points="216,110 202,103 194,110 202,117" fill="#F59E0B" stroke="#FFFFFF" stroke-width="1"/>
+                        <polygon points="35,35 49,40 50,50 40,49" fill="#DC2626" stroke="#FBBF24" stroke-width="1"/>
+                        <polygon points="185,35 180,49 170,50 171,40" fill="#DC2626" stroke="#FBBF24" stroke-width="1"/>
+                        <polygon points="35,185 40,171 50,170 49,180" fill="#DC2626" stroke="#FBBF24" stroke-width="1"/>
+                        <polygon points="185,185 171,180 170,170 180,171" fill="#DC2626" stroke="#FBBF24" stroke-width="1"/>
+                    </g>
+
+                    <!-- Inner Dalihan Na Tolu Star/Rhombus Ring (Counter-Clockwise) -->
+                    <g class="animate-gorga-ccw">
+                        <rect x="48" y="48" width="124" height="124" rx="16" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="1.5"/>
+                        <rect x="48" y="48" width="124" height="124" rx="16" transform="rotate(45 110 110)" stroke="#F59E0B" stroke-opacity="0.7" stroke-width="1.8"/>
+                        <circle cx="110" cy="110" r="56" stroke="#DC2626" stroke-width="2.5" stroke-dasharray="14 6"/>
+                    </g>
+                </svg>
+
+                <!-- Center Crest Logo -->
+                <div class="absolute inset-0 z-20 flex items-center justify-center">
+                    <div class="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl bg-[#0D0E14] border-2 border-emas-400/70 shadow-2xl shadow-gorga-600/40 flex items-center justify-center p-2">
+                        <div id="batak-loader-logo"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batak Toba Cultural Badge & Title -->
+            <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-gorga-600/20 border border-emas-500/40 text-emas-300 text-[11px] font-extrabold uppercase tracking-[0.18em] mb-3">
+                <span class="w-2 h-2 rounded-full bg-emas-400 animate-ping"></span>
+                <span>HORAS! &bull; SADA ROHA &bull; MARSIURUPAN</span>
+            </div>
+
+            <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">
+                Membuka Sopo Partukkoan Admin
+            </h2>
+            <p class="text-xs sm:text-sm text-emas-400/90 font-semibold mt-1">
+                Punguan Naposo Toga Simatupang Se-Duri
+            </p>
+
+            <!-- Ulos Progress Bar -->
+            <div class="w-full mt-7 bg-white/10 rounded-full h-3 p-0.5 border border-white/15 overflow-hidden shadow-inner">
+                <div id="batak-loader-bar" class="ulos-progress-fill h-full rounded-full" style="width: 15%;"></div>
+            </div>
+
+            <div class="w-full flex items-center justify-between gap-2 mt-3 text-xs">
+                <span id="batak-loader-step-text" class="text-slate-300 font-medium text-left truncate">
+                    Memverifikasi identitas &amp; sandi pengurus...
+                </span>
+                <span id="batak-loader-percent" class="text-emas-400 font-mono font-bold shrink-0">
+                    15%
+                </span>
+            </div>
+
+            <!-- Three Pillars Footer Hint (Dalihan Na Tolu) -->
+            <div class="mt-8 pt-5 border-t border-white/10 w-full grid grid-cols-3 gap-2 text-[10px] sm:text-[11px] text-slate-400">
+                <div class="px-2 py-1.5 rounded-lg bg-white/[0.03] border border-white/5">
+                    <span class="block font-bold text-red-400">Somba</span>
+                    <span>Marhula-hula</span>
+                </div>
+                <div class="px-2 py-1.5 rounded-lg bg-white/[0.03] border border-white/5">
+                    <span class="block font-bold text-emas-400">Elek</span>
+                    <span>Marboru</span>
+                </div>
+                <div class="px-2 py-1.5 rounded-lg bg-white/[0.03] border border-white/5">
+                    <span class="block font-bold text-slate-200">Manat</span>
+                    <span>Mardongan Tubu</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="ulos-strip shrink-0"></div>
     </div>
 
     <!-- ===================================================================== -->
@@ -324,25 +493,7 @@
                             <span>Masuk ke Panel Admin</span>
                         </button>
                     </form>
-
-                    <!-- Demo Credentials Info Box -->
-                    <div class="mt-6 p-4 rounded-xl bg-emas-500/10 border border-emas-500/25">
-                        <div class="flex items-center justify-between gap-2 mb-2">
-                            <span class="text-xs font-bold uppercase tracking-wider text-emas-400 flex items-center gap-1.5">
-                                <i data-lucide="key-round" class="w-3.5 h-3.5"></i> Akun Demo Admin
-                            </span>
-                            <button type="button" onclick="fillDemoCredentials()"
-                                class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emas-500/20 hover:bg-emas-500/30 text-emas-300 border border-emas-500/30 transition">
-                                Isi Otomatis Demo
-                            </button>
-                        </div>
-                        <div class="text-xs text-slate-300 space-y-1">
-                            <p>Username: <code class="px-1.5 py-0.5 rounded bg-black/40 text-white font-mono">admin</code></p>
-                            <p>Password Default: <code class="px-1.5 py-0.5 rounded bg-black/40 text-white font-mono">simatupang123</code></p>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 text-center">
+<div class="mt-6 text-center">
                         <button type="button" onclick="switchView('public')"
                             class="text-sm text-slate-400 hover:text-white transition inline-flex items-center gap-1.5">
                             <i data-lucide="arrow-left" class="w-4 h-4"></i>
@@ -827,10 +978,6 @@
         }
 
         async function syncPublicFromCloud() {
-            // Strategi stale-while-revalidate:
-            // 1) loadData() sudah membaca cache localStorage secara sinkron saat file dimuat.
-            // 2) Portal langsung dirender memakai cache tersebut.
-            // 3) Data server diambil setelah tampilan muncul, tanpa menahan halaman.
             try {
                 const result = await pntsApi('/api/data', { method: 'GET' });
                 if (result.data && Object.keys(result.data).length) {
@@ -846,10 +993,16 @@
         }
 
         async function loadAdminDatabaseOrMigrate() {
-            const result = await pntsApi('/api/data', { method: 'GET' });
+            let result;
+            try {
+                // Prioritaskan endpoint admin penuh (/api/admin/data) agar data kas, pending, & log terbaca lengkap
+                result = await pntsApi('/api/admin/data', { method: 'GET' });
+            } catch (adminRouteErr) {
+                // Fallback otomatis ke /api/data jika Worker belum diperbarui ke rute baru
+                result = await pntsApi('/api/data', { method: 'GET' });
+            }
             const serverData = result.data || {};
             if (Object.keys(serverData).length === 0) {
-                // Database kosong: pindahkan data lokal yang sudah ada, bukan menggantinya dengan data kosong.
                 const initial = JSON.parse(JSON.stringify(appData));
                 const cloudData = await prepareCloudData(initial);
                 await pntsApi('/api/data', { method: 'PUT', body: JSON.stringify({ data: cloudData }) });
@@ -859,9 +1012,19 @@
             } else {
                 appData = mergeWithDefaultData({ ...DEFAULT_DATA, ...serverData });
                 saveData(true);
-                showToast('Data terbaru berhasil dimuat dari database.', 'success');
             }
             pntsCloudReady = true;
+        }
+
+        async function syncAdminFromCloud() {
+            try {
+                showToast('Memuat ulang data terbaru dari database...', 'info');
+                await loadAdminDatabaseOrMigrate();
+                renderAdminDashboard();
+                showToast('Data terbaru berhasil dimuat dari database.', 'success');
+            } catch (err) {
+                showToast('Gagal memuat ulang data: ' + err.message, 'error');
+            }
         }
 
         // Listen for cross-tab localStorage updates for true multi-tab real-time sync
@@ -1062,7 +1225,17 @@
                 if (appData.visitorLogs.length > 200) {
                     appData.visitorLogs = appData.visitorLogs.slice(0, 200);
                 }
-                saveData();
+                saveData(true);
+
+                // Kirim log kunjungan publik ke database sekali per sesi browser
+                if (!sessionStorage.getItem('pnts_visit_sent')) {
+                    sessionStorage.setItem('pnts_visit_sent', '1');
+                    fetch(PNTS_API_BASE + '/api/public/visit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ timestamp, device, browser, page: 'Halaman Pengunjung', note })
+                    }).catch(() => {});
+                }
             } catch (err) {
                 console.error('Visitor log error:', err);
             }
@@ -1212,14 +1385,8 @@
                     recordVisitorLog('Mengakses Halaman Pengunjung');
                 }
                 renderPublicPortal();
-                if (lenisInstance) {
-                    lenisInstance.start();
-                    lenisInstance.scrollTo(0, { immediate: true });
-                } else {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             } else if (targetView === 'admin-login') {
-                if (lenisInstance) lenisInstance.stop();
                 document.getElementById('admin-login-view').classList.remove('hidden');
                 document.getElementById('login-error-msg').classList.add('hidden');
                 const loginLogo = document.getElementById('login-logo-holder');
@@ -1228,7 +1395,6 @@
                 }
                 refreshIcons();
             } else if (targetView === 'admin') {
-                if (lenisInstance) lenisInstance.stop();
                 document.getElementById('admin-dashboard-view').classList.remove('hidden');
                 const sidebarLogo = document.getElementById('admin-sidebar-logo');
                 if (sidebarLogo) {
@@ -1531,7 +1697,7 @@
                                     <div class="min-w-0">
                                         <span class="inline-block px-2.5 py-0.5 rounded-md bg-gorga-600/20 text-red-300 text-[11px] font-bold uppercase tracking-wider mb-1">${escapeHtml(p.role)}</span>
                                         <h4 class="text-base font-bold text-white truncate">${escapeHtml(p.name)}</h4>
-                                        <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(p.marga)} ${p.period ? '➤ ' + escapeHtml(p.period) : ''}</p>
+                                        <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(p.marga)} ${p.period ? '&bull; ' + escapeHtml(p.period) : ''}</p>
                                     </div>
                                 </div>
                             `).join('')}
@@ -1764,7 +1930,7 @@
                                                 </div>
                                                 <div>
                                                     <h4 class="text-sm font-bold text-white">${escapeHtml(rev.name)}</h4>
-                                                    <p class="text-xs text-slate-400">${escapeHtml(rev.role || 'Pengunjung')} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${formatDateIndo(rev.date)}</p>
+                                                    <p class="text-xs text-slate-400">${escapeHtml(rev.role || 'Pengunjung')} &bull; ${formatDateIndo(rev.date)}</p>
                                                 </div>
                                             </div>
                                             <div class="flex items-center gap-0.5 shrink-0">
@@ -1982,8 +2148,8 @@
                         </div>
 
                         <div class="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-                            <p>&copy; ${new Date().getFullYear()} ${escapeHtml(s.orgName)} ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ${escapeHtml(s.orgSubtitle)}. Horas!</p>
-                            <p>Togatorop ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Sianturi ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Siburian ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Boru ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Bere</p>
+                            <p>&copy; ${new Date().getFullYear()} ${escapeHtml(s.orgName)} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${escapeHtml(s.orgSubtitle)}. Horas!</p>
+                            <p>Togatorop &bull; Sianturi &bull; Siburian &bull; Boru &bull; Bere</p>
                         </div>
                     </div>
                 </footer>
@@ -1999,106 +2165,6 @@
             initMotionEngine();
         }
 
-        function handlePublicAlbumFilter(cat) {
-            publicAlbumFilter = cat;
-            renderPublicPortal();
-        }
-
-        function renderPublicAlbumGrid() {
-            const grid = document.getElementById('public-album-grid');
-            if (!grid) return;
-
-            const list = (appData.albums || [])
-                .filter(a => publicAlbumFilter === 'Semua' || a.category === publicAlbumFilter)
-                .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-
-            if (list.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full glass-panel rounded-2xl p-10 text-center text-slate-400 text-sm">
-                        Belum ada foto kegiatan untuk kategori ini.
-                    </div>`;
-                return;
-            }
-
-            grid.innerHTML = list.map(alb => `
-                <div onclick="openAlbumLightbox('${alb.id}')" class="gsap-card group cursor-pointer glass-panel rounded-2xl overflow-hidden glass-panel-hover transition flex flex-col">
-                    <div class="relative aspect-[4/3] bg-black/50 overflow-hidden">
-                        <img src="${alb.image}" alt="${escapeHtml(alb.title)}"
-                            onerror="this.src='https://placehold.co/800x600/18181B/F59E0B?text=Foto+Kegiatan'"
-                            class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div class="absolute inset-0 bg-gradient-to-t from-obsidian/90 via-transparent to-transparent opacity-80"></div>
-                        <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-obsidian/80 backdrop-blur-md border border-emas-500/40 text-emas-300 text-[11px] font-bold">
-                            ${escapeHtml(alb.category)}
-                        </span>
-                        <span class="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition">
-                            <i data-lucide="maximize-2" class="w-4 h-4"></i>
-                        </span>
-                    </div>
-                    <div class="p-5 flex-1 flex flex-col justify-between">
-                        <div>
-                            <p class="text-[11px] text-slate-400 flex items-center gap-1.5 mb-1.5">
-                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-emas-400"></i>
-                                ${formatDateIndo(alb.date)}
-                            </p>
-                            <h3 class="text-base font-bold text-white group-hover:text-emas-300 transition">${escapeHtml(alb.title)}</h3>
-                            ${alb.caption ? `<p class="text-xs text-slate-300 mt-1.5 leading-relaxed line-clamp-2">${escapeHtml(alb.caption)}</p>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            refreshIcons();
-            animateDynamicCards('#public-album-grid .gsap-card');
-        }
-
-        function handlePublicAlbumFilter(cat) {
-            publicAlbumFilter = cat;
-            renderPublicPortal();
-        }
-
-        function renderPublicAlbumGrid() {
-            const grid = document.getElementById('public-album-grid');
-            if (!grid) return;
-
-            const list = (appData.albums || [])
-                .filter(a => publicAlbumFilter === 'Semua' || a.category === publicAlbumFilter)
-                .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-
-            if (list.length === 0) {
-                grid.innerHTML = `
-                    <div class="col-span-full glass-panel rounded-2xl p-10 text-center text-slate-400 text-sm">
-                        Belum ada foto kegiatan untuk kategori ini.
-                    </div>`;
-                return;
-            }
-
-            grid.innerHTML = list.map(alb => `
-                <div onclick="openAlbumLightbox('${alb.id}')" class="group cursor-pointer glass-panel rounded-2xl overflow-hidden glass-panel-hover transition flex flex-col">
-                    <div class="relative aspect-[4/3] bg-black/50 overflow-hidden">
-                        <img src="${alb.image}" alt="${escapeHtml(alb.title)}"
-                            onerror="this.src='https://placehold.co/800x600/18181B/F59E0B?text=Foto+Kegiatan'"
-                            class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
-                        <div class="absolute inset-0 bg-gradient-to-t from-obsidian/90 via-transparent to-transparent opacity-80"></div>
-                        <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-obsidian/80 backdrop-blur-md border border-emas-500/40 text-emas-300 text-[11px] font-bold">
-                            ${escapeHtml(alb.category)}
-                        </span>
-                        <span class="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition">
-                            <i data-lucide="maximize-2" class="w-4 h-4"></i>
-                        </span>
-                    </div>
-                    <div class="p-5 flex-1 flex flex-col justify-between">
-                        <div>
-                            <p class="text-[11px] text-slate-400 flex items-center gap-1.5 mb-1.5">
-                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-emas-400"></i>
-                                ${formatDateIndo(alb.date)}
-                            </p>
-                            <h3 class="text-base font-bold text-white group-hover:text-emas-300 transition">${escapeHtml(alb.title)}</h3>
-                            ${alb.caption ? `<p class="text-xs text-slate-300 mt-1.5 leading-relaxed line-clamp-2">${escapeHtml(alb.caption)}</p>` : ''}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-            refreshIcons();
-        }
 
         function openAlbumLightbox(id) {
             const alb = (appData.albums || []).find(a => a.id === id);
@@ -2204,8 +2270,10 @@
             }
         }
 
-        function handlePublicRegistration(e) {
+        async function handlePublicRegistration(e) {
             e.preventDefault();
+            const submitBtn = e.submitter || e.target.querySelector('button[type="submit"]');
+            const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
             const name = document.getElementById('reg-name').value.trim();
             const gender = document.getElementById('reg-gender').value;
             const status = document.getElementById('reg-status').value;
@@ -2241,8 +2309,36 @@
                 joinedAt: new Date().toISOString().split('T')[0]
             };
 
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span><span>Mengirim ke Database Punguan...</span>`;
+            }
+
+            let cloudSaved = false;
+            try {
+                const res = await fetch(PNTS_API_BASE + '/api/public/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ member: newMember })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (res.ok && data.success) {
+                    cloudSaved = true;
+                    if (data.member && data.member.photo) {
+                        newMember.photo = data.member.photo;
+                    }
+                }
+            } catch (err) {
+                console.warn('Koneksi cloud pendaftaran tertunda:', err);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = origBtnHtml;
+                }
+            }
+
             appData.members.unshift(newMember);
-            saveData();
+            saveData(true);
             e.target.reset();
             pendingRegPhotoData = '';
             const previewBox = document.getElementById('reg-photo-preview-box');
@@ -2252,7 +2348,12 @@
             toggleCustomMargaInput();
             refreshIcons();
 
-            showToast(`Horas ${name}! Pendaftaran masuk ke Portal Admin.`, 'success');
+            showToast(
+                cloudSaved
+                    ? `Horas ${name}! Pendaftaran berhasil masuk ke Database & Portal Admin.`
+                    : `Horas ${name}! Data tersimpan; silakan klik tombol WhatsApp Admin di bawah.`,
+                'success'
+            );
 
             // Prepare WhatsApp Notification URL for Admin
             const adminWa = formatWaNumber(appData.settings.whatsapp);
@@ -2260,17 +2361,17 @@
                 `*HORAS! PENDAFTARAN ANGGOTA BARU*`,
                 `_${appData.settings.orgName}_`,
                 ``,
-                `👤 *Nama Lengkap:* ${newMember.name}`,
-                `👩🏻‍🤝‍👨🏽 *Jenis Kelamin:* ${newMember.gender}`,
-                `💕 *Status:* ${newMember.status}`,
-                `🔗 *Marga / Sub-Marga:* ${newMember.marga}`,
-                `♛ *Tubuni Br.:* ${newMember.tubuniBr}`,
-                `🏡 *Asal (Huta):* ${newMember.huta}`,
-                `🕑 *Aktivitas:* ${newMember.activity}`,
-                `🗺️ *Sektor Domisili:* ${newMember.sector}`,
-                `✆ *No. WhatsApp:* ${newMember.whatsapp}`,
-                `🤔 *Alasan Bergabung:* ${newMember.reason}`,
-                `🗓️ *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
+                `ðŸ‘¤ *Nama Lengkap:* ${newMember.name}`,
+                `ðŸ‘©ðŸ»â€ðŸ¤â€ðŸ‘¨ðŸ½ *Jenis Kelamin:* ${newMember.gender}`,
+                `ðŸ’• *Status:* ${newMember.status}`,
+                `ðŸ”— *Marga / Sub-Marga:* ${newMember.marga}`,
+                `â™› *Tubuni Br.:* ${newMember.tubuniBr}`,
+                `ðŸ¡ *Asal (Huta):* ${newMember.huta}`,
+                `ðŸ•‘ *Aktivitas:* ${newMember.activity}`,
+                `ðŸ—ºï¸ *Sektor Domisili:* ${newMember.sector}`,
+                `âœ† *No. WhatsApp:* ${newMember.whatsapp}`,
+                `ðŸ¤” *Alasan Bergabung:* ${newMember.reason}`,
+                `ðŸ—“ï¸ *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
                 ``,
                 `Mohon verifikasi di Portal Admin. Mauliate!`
             ].join('\n');
@@ -2313,7 +2414,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} 📲 WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} ðŸ“² WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
@@ -2390,7 +2491,7 @@
                 </div>
 
                 <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 flex gap-4 items-start mb-5 text-xs">
-                    <div class="w-20 h-26 rounded-xl bg-black/40 border border-white/15 overflow-hidden shrink-0 flex items-center justify-center">
+                    <div class="w-20 aspect-[3/4] rounded-xl bg-black/40 border border-white/15 overflow-hidden shrink-0 flex items-center justify-center">
                         ${member.photo
                             ? `<img src="${member.photo}" class="w-20 h-28 object-cover">`
                             : `<div class="w-20 h-28 flex items-center justify-center text-[10px] text-slate-500 text-center">Pas Photo<br>3x4</div>`}
@@ -2444,8 +2545,10 @@
             refreshIcons();
         }
 
-        function handlePublicReviewSubmit(e) {
+        async function handlePublicReviewSubmit(e) {
             e.preventDefault();
+            const submitBtn = e.submitter || e.target.querySelector('button[type="submit"]');
+            const origHtml = submitBtn ? submitBtn.innerHTML : '';
             const name = document.getElementById('rev-name').value.trim();
             const role = document.getElementById('rev-role').value.trim() || 'Pengunjung';
             const comment = document.getElementById('rev-comment').value.trim();
@@ -2455,7 +2558,7 @@
                 return;
             }
 
-            appData.reviews.unshift({
+            const newReview = {
                 id: generateId('r'),
                 name,
                 role,
@@ -2463,12 +2566,35 @@
                 comment,
                 date: new Date().toISOString().split('T')[0],
                 status: 'pending'
-            });
-            saveData();
+            };
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<span class="w-4 h-4 border-2 border-obsidian border-t-transparent rounded-full animate-spin"></span><span>Mengirim Ulasan...</span>`;
+            }
+
+            try {
+                await fetch(PNTS_API_BASE + '/api/public/review', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ review: newReview })
+                });
+            } catch (err) {
+                console.warn('Koneksi cloud ulasan tertunda:', err);
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = origHtml;
+                }
+            }
+
+            appData.reviews.unshift(newReview);
+            saveData(true);
             e.target.reset();
             selectedReviewRating = 5;
             setReviewRating(5);
-            showToast('Terima kasih! Ulasan Anda telah dikirim dan menunggu persetujuan Admin.', 'success');
+            refreshIcons();
+            showToast('Terima kasih! Ulasan Anda telah dikirim ke Admin untuk moderasi.', 'success');
         }
 
         function openCustomerServiceModal() {
@@ -2597,8 +2723,17 @@
                 return;
             }
 
-            // Mode lokal / pratinjau: buka aplikasi email default pengguna
-            window.location.href = mailtoUrl;
+            // Kirim catatan pengaduan ke server agar tetap masuk walau perangkat tidak punya aplikasi email
+            fetch(PNTS_API_BASE + '/api/public/complaint', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, contact, subject, message })
+            }).catch(() => {});
+
+            // Buka aplikasi email default pengguna sebagai jalur tambahan
+            try {
+                window.location.href = mailtoUrl;
+            } catch (err) {}
 
             openModal(`
                 <div class="text-center">
@@ -2682,8 +2817,37 @@
         // =====================================================================
         // 8. ADMIN AUTHENTICATION LOGIC
         // =====================================================================
-        function fillDemoCredentials() {
-            showToast('Masukkan username dan password admin yang sudah disimpan di Cloudflare.', 'info');
+        function showBatakLoginLoader() {
+            const loader = document.getElementById('batak-login-loader');
+            const logoHolder = document.getElementById('batak-loader-logo');
+            if (logoHolder) {
+                logoHolder.innerHTML = getGorgaLogoSVG('w-14 h-14');
+            }
+            updateBatakLoginLoader(18, 'Horas! Memverifikasi ID & sandi pengurus...');
+            if (loader) {
+                loader.classList.remove('hidden');
+                loader.style.opacity = '1';
+                loader.style.transition = 'opacity 0.35s ease';
+            }
+        }
+
+        function updateBatakLoginLoader(percent, stepText) {
+            const bar = document.getElementById('batak-loader-bar');
+            const textEl = document.getElementById('batak-loader-step-text');
+            const pctEl = document.getElementById('batak-loader-percent');
+            if (bar) bar.style.width = `${Math.min(100, Math.max(5, percent))}%`;
+            if (textEl && stepText) textEl.textContent = stepText;
+            if (pctEl) pctEl.textContent = `${Math.round(percent)}%`;
+        }
+
+        function hideBatakLoginLoader() {
+            const loader = document.getElementById('batak-login-loader');
+            if (!loader) return;
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                loader.style.opacity = '1';
+            }, 340);
         }
 
         async function handleAdminLoginSubmit(e) {
@@ -2691,25 +2855,41 @@
             const u = document.getElementById('login-username').value.trim();
             const p = document.getElementById('login-password').value;
             const errorBox = document.getElementById('login-error-msg');
+            const minLoaderDelay = new Promise(resolve => setTimeout(resolve, 1550));
+
+            errorBox.classList.add('hidden');
+            showBatakLoginLoader();
+
             try {
                 const response = await fetch(PNTS_API_BASE + '/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username: u, password: p })
                 });
-                const result = await response.json();
-                if (!response.ok || !result.success || !result.token) throw new Error(result.message || 'Username atau password salah.');
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok || !result.success || !result.token) {
+                    throw new Error(result.message || 'Username atau password salah.');
+                }
+
+                updateBatakLoginLoader(55, 'Akses diterima! Membuka Sopo Partukkoan Admin...');
                 pntsAdminToken = result.token;
                 sessionStorage.setItem('pnts_admin_token', pntsAdminToken);
-                await loadAdminDatabaseOrMigrate();
+
+                updateBatakLoginLoader(82, 'Menyinkronkan database anggota, agenda & kas...');
+                await Promise.all([loadAdminDatabaseOrMigrate(), minLoaderDelay]);
+
+                updateBatakLoginLoader(100, 'Mauliate! Selamat datang di Panel Kontrol Admin.');
+                await new Promise(resolve => setTimeout(resolve, 350));
+
                 isAdminLoggedIn = true;
-                errorBox.classList.add('hidden');
                 e.target.reset();
-                showToast('Login berhasil. Database PNTS DURI tersambung.', 'success');
                 switchView('admin');
+                hideBatakLoginLoader();
+                showToast('Horas! Login berhasil & Database PNTS DURI tersambung.', 'success');
             } catch (err) {
                 pntsAdminToken = '';
                 sessionStorage.removeItem('pnts_admin_token');
+                hideBatakLoginLoader();
                 errorBox.classList.remove('hidden');
                 showToast(err.message || 'Login gagal. Periksa koneksi dan akun admin Cloudflare.', 'error');
             }
@@ -2886,7 +3066,7 @@
                                     <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</p>
-                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} • ${escapeHtml(m.status)} • ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.status)} â€¢ ${escapeHtml(m.sector)}</p>
                                         </div>
                                         <div class="flex items-center gap-1.5 shrink-0">
                                             <button onclick="approveMember('${m.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition">Setujui</button>
@@ -3180,9 +3360,9 @@
                                 <div class="p-4 rounded-xl bg-black/40 border border-emas-500/30 flex flex-col justify-between gap-3">
                                     <div class="flex gap-3 items-start">
                                         ${m.photo ? `
-                                            <img src="${m.photo}" alt="${escapeHtml(m.name)}" class="w-16 h-22 rounded-lg object-cover border border-white/15 shrink-0">
+                                            <img src="${m.photo}" alt="${escapeHtml(m.name)}" class="w-16 aspect-[3/4] rounded-lg object-cover border border-white/15 shrink-0">
                                         ` : `
-                                            <div class="w-14 h-18 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-emas-300 shrink-0">
+                                            <div class="w-14 aspect-[3/4] rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-xs font-bold text-emas-300 shrink-0">
                                                 ${escapeHtml(m.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase())}
                                             </div>
                                         `}
@@ -3191,10 +3371,10 @@
                                                 <h4 class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</h4>
                                                 <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase shrink-0 ${getStatusBadgeClass(m.status)}">${escapeHtml(m.status)}</span>
                                             </div>
-                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} • ${escapeHtml(m.gender || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} • Huta: ${escapeHtml(m.huta || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} • Sektor: ${escapeHtml(m.sector)}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} • Daftar: ${formatDateIndo(m.joinedAt)}</p>
+                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.gender || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} â€¢ Huta: ${escapeHtml(m.huta || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} â€¢ Sektor: ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} â€¢ Daftar: ${formatDateIndo(m.joinedAt)}</p>
                                             ${m.reason ? `<p class="text-[11px] text-slate-300 mt-1.5 italic bg-white/5 p-2 rounded-lg">"${escapeHtml(m.reason)}"</p>` : ''}
                                         </div>
                                     </div>
@@ -3266,8 +3446,8 @@
                                                 ${m.photo ? `<img src="${m.photo}" class="w-9 h-11 rounded-lg object-cover border border-white/15 shrink-0">` : ''}
                                                 <div>
                                                     <p class="font-bold text-white">${escapeHtml(m.name)}</p>
-                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? '• Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
-                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} • ${escapeHtml(m.activity || '-')}</p>` : ''}
+                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? 'â€¢ Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
+                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} â€¢ ${escapeHtml(m.activity || '-')}</p>` : ''}
                                                 </div>
                                             </div>
                                         </td>
@@ -3435,7 +3615,7 @@
                                 </div>
                                 <h4 class="text-base font-bold text-white">${escapeHtml(ev.title)}</h4>
                                 <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">${escapeHtml(ev.description)}</p>
-                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} • <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
+                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} â€¢ <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
                             </div>
                             <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
                                 <button onclick="openEventModal('${ev.id}')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-emas-500/20 text-xs font-semibold text-slate-200 hover:text-emas-300 transition">Edit</button>
@@ -3849,7 +4029,7 @@
                                         <div class="min-w-0">
                                             <span class="text-[11px] font-bold uppercase text-emas-400">${escapeHtml(p.role)}</span>
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(p.name)}</p>
-                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? '• ' + escapeHtml(p.period) : ''}</p>
+                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? 'â€¢ ' + escapeHtml(p.period) : ''}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1 shrink-0">
@@ -4162,7 +4342,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 19px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} • WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} â€¢ WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
@@ -4582,23 +4762,20 @@
                                     <i data-lucide="database" class="w-5 h-5 text-emas-400"></i>
                                     Manajemen Data Aplikasi
                                 </h3>
-                                <div class="mb-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${isGasEnvironment() ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-300' : 'bg-white/5 border border-white/10 text-slate-300'}">
-                                    <span class="w-2 h-2 rounded-full ${isGasEnvironment() ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}"></span>
-                                    <span>${isGasEnvironment() ? 'Terhubung ke Database Google Sheets (Cloud)' : 'Mode Penyimpanan Lokal (Browser)'}</span>
+                                <div class="mb-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold ${pntsCloudReady ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-300' : 'bg-amber-500/15 border border-amber-500/40 text-amber-300'}">
+                                    <span class="w-2 h-2 rounded-full ${pntsCloudReady ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}"></span>
+                                    <span>${pntsCloudReady ? 'Terhubung ke Cloudflare & Google Sheets (Cloud)' : 'Mode Cadangan Lokal (Browser)'}</span>
                                 </div>
                                 <p class="text-sm text-slate-300 leading-relaxed">
-                                    ${isGasEnvironment()
-                                        ? 'Seluruh perubahan otomatis tersimpan ke <strong>Google Sheets</strong> melalui <code>Code.gs</code> dan dicadangkan di browser.'
-                                        : 'Seluruh data Punguan tersimpan secara lokal di browser Anda (<code>localStorage</code>). Saat dipasang di Google Apps Script, data otomatis tersinkron ke Google Sheets.'}
+                                    Seluruh perubahan Admin otomatis disinkronkan ke <strong>Google Sheets &amp; Google Drive</strong> melalui jembatan Cloudflare Worker dan dicadangkan di browser.
                                 </p>
                             </div>
 
                             <div class="space-y-3">
-                                ${isGasEnvironment() ? `
-                                <button onclick="syncFromGoogleSheets(true)" class="w-full py-3 px-4 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-sm font-bold transition flex items-center justify-center gap-2">
+                                <button onclick="syncAdminFromCloud()" class="w-full py-3 px-4 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-sm font-bold transition flex items-center justify-center gap-2">
                                     <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                                    <span>Muat Ulang Data dari Google Sheets</span>
-                                </button>` : ''}
+                                    <span>Muat Ulang Data dari Database Cloud</span>
+                                </button>
                                 <button onclick="exportDataJson()" class="w-full py-3 px-4 rounded-xl bg-emas-500/15 hover:bg-emas-500/25 border border-emas-500/40 text-emas-300 text-sm font-bold transition flex items-center justify-center gap-2">
                                     <i data-lucide="download" class="w-4 h-4"></i>
                                     <span>Export Seluruh Data ke JSON</span>
@@ -4669,56 +4846,9 @@
         // =====================================================================
         // 10. LENIS SMOOTH SCROLL + GSAP SCROLLTRIGGER MOTION ENGINE
         // =====================================================================
-        let lenisInstance = null;
         let gsapCtx = null;
 
-        /**
-         * Initializes Lenis smooth scrolling and syncs it with GSAP ScrollTrigger & anchor links.
-         */
-        function initLenisSmoothScroll() {
-            if (typeof Lenis === 'undefined') return;
-            if (!lenisInstance) {
-                lenisInstance = new Lenis({
-                    duration: 1.15,
-                    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-                    smoothWheel: true,
-                    wheelMultiplier: 1,
-                    touchMultiplier: 1.5
-                });
 
-                if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-                    gsap.registerPlugin(ScrollTrigger);
-                    lenisInstance.on('scroll', ScrollTrigger.update);
-                    gsap.ticker.add((time) => {
-                        lenisInstance.raf(time * 1000);
-                    });
-                    gsap.ticker.lagSmoothing(0);
-                } else {
-                    const raf = (time) => {
-                        lenisInstance.raf(time);
-                        requestAnimationFrame(raf);
-                    };
-                    requestAnimationFrame(raf);
-                }
-
-                // Smooth anchor navigation via Lenis
-                document.addEventListener('click', (e) => {
-                    const anchor = e.target.closest('a[href^="#"]');
-                    if (!anchor || currentView !== 'public') return;
-                    const targetId = anchor.getAttribute('href');
-                    if (!targetId || targetId === '#') return;
-                    const targetEl = document.querySelector(targetId);
-                    if (targetEl && lenisInstance) {
-                        e.preventDefault();
-                        lenisInstance.scrollTo(targetEl, { offset: -76, duration: 1.2 });
-                    }
-                });
-            }
-        }
-
-        /**
-         * Splits heading text nodes into word spans while preserving inner gradient spans.
-         */
         function splitHeadingWords(el) {
             if (!el || el.dataset.wordsSplit === 'true') return el ? el.querySelectorAll('.gsap-word') : [];
             const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
