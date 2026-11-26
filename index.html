@@ -3242,21 +3242,34 @@
         ];
 
         async function renderAdminTabBphAccounts(container) {
-            container.innerHTML = `<div class="glass-panel rounded-2xl p-6"><h3 class="text-lg font-bold text-white">Manajemen Akun BPH</h3><p class="text-sm text-slate-400 mt-1">Buat akun, atur password, atau aktif/nonaktifkan akun. Password disimpan sebagai hash di Google Spreadsheet dan tidak ditampilkan kembali.</p><div id="bph-account-list" class="mt-5 text-sm text-slate-400">Memuat status akun...</div></div><div class="grid md:grid-cols-2 gap-4 mt-5">${PNTS_BPH_ROSTER.map((u,i)=>`<form onsubmit="saveBphAccount(event,${i})" class="glass-panel rounded-2xl p-5 space-y-3"><div class="flex items-center justify-between"><div><p class="font-bold text-white">${u.name}</p><p class="text-xs text-emas-300">${u.label}</p></div><span id="bph-status-${i}" class="text-[10px] text-slate-500">Belum diperiksa</span></div><input type="hidden" name="username" value="${u.name.toLowerCase()}"><label class="block text-[11px] text-slate-400">Password ${u.name} (minimal 8 karakter; kosongkan jika tidak ingin mengganti password)</label><input name="password" type="password" minlength="8" autocomplete="new-password" placeholder="Masukkan password awal / baru" class="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white"><label class="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" name="active" checked class="accent-emerald-500"> Akun aktif</label><button type="submit" class="w-full py-2.5 rounded-xl bg-gorga-600 hover:bg-gorga-500 text-white text-xs font-bold">Simpan Akun ${u.name}</button></form>`).join('')}</div><div class="mt-5 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 text-xs text-amber-200">Penting: buat password berbeda untuk setiap pengurus dan sampaikan secara pribadi. Jangan gunakan password Admin.</div>`;
+            container.innerHTML = `<div class="glass-panel rounded-2xl p-6"><h3 class="text-lg font-bold text-white">Manajemen Akun BPH</h3><p class="text-sm text-slate-400 mt-1">Admin dapat menentukan username dan password sendiri. Password juga dicatat pada kolom PASSWORD_TAMPIL di spreadsheet agar dapat dilihat kembali.</p><div class="mt-3 p-3 rounded-xl border border-amber-500/30 bg-amber-500/5 text-xs text-amber-200">Peringatan keamanan: password yang terlihat di spreadsheet adalah teks biasa. Batasi akses spreadsheet hanya untuk Admin tepercaya dan jangan bagikan file tersebut kepada pengurus umum.</div><div id="bph-account-list" class="mt-5 text-sm text-slate-400">Memuat status akun...</div></div><div class="grid md:grid-cols-2 gap-4 mt-5">${PNTS_BPH_ROSTER.map((u,i)=>`<form onsubmit="saveBphAccount(event,${i})" class="glass-panel rounded-2xl p-5 space-y-3"><div class="flex items-center justify-between"><div><p class="font-bold text-white">${u.name}</p><p class="text-xs text-emas-300">${u.label}</p></div><span id="bph-status-${i}" class="text-[10px] text-slate-500">Belum diperiksa</span></div><input type="hidden" name="originalUsername" value="${u.name.toLowerCase()}"><label class="block text-[11px] text-slate-400">Username pilihan Admin</label><input name="username" required maxlength="60" pattern="[A-Za-z0-9._-]+" value="${u.name.toLowerCase()}" autocomplete="off" placeholder="Contoh: evi.bendahara" class="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white"><label class="block text-[11px] text-slate-400">Password pilihan Admin (minimal 8 karakter)</label><div class="flex gap-2"><input name="password" type="password" minlength="8" autocomplete="new-password" placeholder="Masukkan password awal / baru" class="min-w-0 flex-1 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white"><button type="button" onclick="toggleBphPasswordField(this)" class="px-3 rounded-xl border border-white/10 text-xs text-emas-200">Lihat</button></div><label class="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" name="active" checked class="accent-emerald-500"> Akun aktif</label><button type="submit" class="w-full py-2.5 rounded-xl bg-gorga-600 hover:bg-gorga-500 text-white text-xs font-bold">Simpan Akun ${u.name}</button></form>`).join('')}</div><div class="mt-5 p-4 rounded-xl border border-white/10 bg-white/[0.03] text-xs text-slate-300">Jika username diganti, akun lama akan diperbarui menggunakan username baru. Password kosong pada akun yang sudah ada berarti password lama tetap digunakan.</div>`;
             try {
                 const r = await pntsApi('/api/admin/bph-users', { method: 'GET' });
                 pntsBphUsers = r.users || [];
                 PNTS_BPH_ROSTER.forEach((u,i)=>{
-                    const found = pntsBphUsers.find(x=>x.username===u.name.toLowerCase());
+                    const found = pntsBphUsers.find(x=>x.username===u.name.toLowerCase() || x.name.toLowerCase()===u.name.toLowerCase());
                     const el = document.getElementById('bph-status-'+i);
                     if (el) { el.textContent = found ? (found.active ? 'AKTIF' : 'NONAKTIF') : 'BELUM DIBUAT'; el.className = 'text-[10px] font-bold '+(found && found.active ? 'text-emerald-300' : 'text-amber-300'); }
+                    const form = container.querySelectorAll('form')[i];
+                    if (found && form) {
+                      form.elements.originalUsername.value = found.username;
+                      form.elements.username.value = found.username;
+                      form.elements.active.checked = !!found.active;
+                    }
                 });
                 const list = document.getElementById('bph-account-list');
-                if (list) list.innerHTML = pntsBphUsers.length ? `<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">${pntsBphUsers.map(u=>`<div class="rounded-lg bg-white/[0.03] border border-white/10 px-3 py-2"><b class="text-white">${escapeHtml(u.name)}</b><div class="text-[11px] text-slate-400">@${escapeHtml(u.username)} â€¢ ${escapeHtml(u.roleLabel)} â€¢ <span class="${u.active?'text-emerald-300':'text-red-300'}">${u.active?'Aktif':'Nonaktif'}</span></div></div>`).join('')}</div>` : 'Belum ada akun BPH yang dibuat. Isi password pada kartu pengurus, lalu tekan Simpan.';
+                if (list) list.innerHTML = pntsBphUsers.length ? `<div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead><tr class="text-slate-400 border-b border-white/10"><th class="p-2">Nama / Jabatan</th><th class="p-2">Username</th><th class="p-2">Password</th><th class="p-2">Status</th></tr></thead><tbody>${pntsBphUsers.map(u=>`<tr class="border-b border-white/5"><td class="p-2"><b class="text-white">${escapeHtml(u.name)}</b><div class="text-slate-400">${escapeHtml(u.roleLabel)}</div></td><td class="p-2 text-emas-200">${escapeHtml(u.username)}</td><td class="p-2 text-slate-200">${u.passwordDisplay ? escapeHtml(u.passwordDisplay) : '<span class="text-amber-300">Tidak tersimpan (buat password baru)</span>'}</td><td class="p-2 ${u.active?'text-emerald-300':'text-red-300'}">${u.active?'Aktif':'Nonaktif'}</td></tr>`).join('')}</tbody></table></div>` : 'Belum ada akun BPH yang dibuat. Isi username dan password, lalu tekan Simpan.';
             } catch (err) {
                 const list = document.getElementById('bph-account-list');
                 if (list) list.innerHTML = `<span class="text-red-300">Gagal memuat akun: ${escapeHtml(err.message)}. Pastikan Worker dan Code.gs versi BPH sudah dipasang.</span>`;
             }
+        }
+
+        function toggleBphPasswordField(button) {
+            const input = button.parentElement.querySelector('input[name="password"]');
+            if (!input) return;
+            input.type = input.type === 'password' ? 'text' : 'password';
+            button.textContent = input.type === 'password' ? 'Lihat' : 'Sembunyikan';
         }
 
         async function saveBphAccount(event, index) {
@@ -3264,8 +3277,9 @@
             const form = event.target;
             const u = PNTS_BPH_ROSTER[index];
             const password = form.elements.password.value;
+            const username = form.elements.username.value.trim().toLowerCase();
             try {
-                await pntsApi('/api/admin/bph-users', { method: 'POST', body: JSON.stringify({ user: { username: u.name.toLowerCase(), name: u.name, role: u.role, password, active: form.elements.active.checked } }) });
+                await pntsApi('/api/admin/bph-users', { method: 'POST', body: JSON.stringify({ user: { username, originalUsername: form.elements.originalUsername.value, name: u.name, role: u.role, password, active: form.elements.active.checked } }) });
                 form.elements.password.value = '';
                 showToast('Akun BPH ' + u.name + ' berhasil disimpan.', 'success');
                 await renderAdminTabBphAccounts(document.getElementById('admin-main-content'));
@@ -3281,16 +3295,31 @@
             const username = document.getElementById('bph-login-username').value.trim().toLowerCase();
             const password = document.getElementById('bph-login-password').value;
             const errBox = document.getElementById('bph-login-error');
+            const minLoaderDelay = new Promise(resolve => setTimeout(resolve, 1550));
             errBox.classList.add('hidden');
+            showBatakLoginLoader();
+            updateBatakLoginLoader(25, 'Horas! Memverifikasi akun dan sandi pengurus BPH...');
             try {
-                const response = await fetch(PNTS_API_BASE + '/api/bph/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+                const [response] = await Promise.all([
+                  fetch(PNTS_API_BASE + '/api/bph/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) })
+                ]);
                 const result = await response.json().catch(()=>({}));
                 if (!response.ok || !result.success || !result.token) throw new Error(result.message || 'Login BPH gagal.');
+                updateBatakLoginLoader(58, 'Akses diterima! Menyiapkan Portal BPH PNTS DURI...');
                 pntsBphToken = result.token; pntsBphUser = result.user; sessionStorage.setItem('pnts_bph_token', pntsBphToken);
-                await loadBphData();
+                updateBatakLoginLoader(78, 'Menyinkronkan data sesuai jabatan pengurus...');
+                await Promise.all([loadBphData(), minLoaderDelay]);
+                updateBatakLoginLoader(100, 'Horas! Portal BPH siap digunakan.');
+                await new Promise(resolve => setTimeout(resolve, 350));
                 event.target.reset(); switchView('bph');
+                hideBatakLoginLoader();
                 showToast('Horas! Selamat datang di Portal BPH.', 'success');
-            } catch (err) { errBox.textContent = err.message; errBox.classList.remove('hidden'); }
+            } catch (err) {
+                pntsBphToken = ''; pntsBphUser = null;
+                sessionStorage.removeItem('pnts_bph_token');
+                hideBatakLoginLoader();
+                errBox.textContent = err.message; errBox.classList.remove('hidden');
+            }
         }
 
         async function loadBphData() {
