@@ -408,7 +408,7 @@
             </div>
 
             <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">
-                Membuka Sopo Partukkoan PNTS
+                Membuka Sopo Partukkoan Admin
             </h2>
             <p class="text-xs sm:text-sm text-emas-400/90 font-semibold mt-1">
                 Punguan Naposo Toga Simatupang Se-Duri
@@ -2460,17 +2460,17 @@
                 `*HORAS! PENDAFTARAN ANGGOTA BARU*`,
                 `_${appData.settings.orgName}_`,
                 ``,
-                `➤ *Nama Lengkap:* ${newMember.name}`,
-                `➤ *Jenis Kelamin:* ${newMember.gender}`,
-                `➤ *Status:* ${newMember.status}`,
-                `➤ *Marga / Sub-Marga:* ${newMember.marga}`,
-                `➤ *Tubuni Br.:* ${newMember.tubuniBr}`,
-                `➤ *Asal (Huta):* ${newMember.huta}`,
-                `➤ *Aktivitas:* ${newMember.activity}`,
-                `➤ *Sektor Domisili:* ${newMember.sector}`,
-                `➤ *No. WhatsApp:* ${newMember.whatsapp}`,
-                `➤ *Alasan Bergabung:* ${newMember.reason}`,
-                `➤ *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
+                `â€¢ *Nama Lengkap:* ${newMember.name}`,
+                `â€¢ *Jenis Kelamin:* ${newMember.gender}`,
+                `â€ªâ€ªâ€¢â€¬ *Status:* ${newMember.status}`,
+                `â€¢ *Marga / Sub-Marga:* ${newMember.marga}`,
+                `â€¢ *Tubuni Br.:* ${newMember.tubuniBr}`,
+                `â€¢ *Asal (Huta):* ${newMember.huta}`,
+                `â€¢ *Aktivitas:* ${newMember.activity}`,
+                `â€¢ *Sektor Domisili:* ${newMember.sector}`,
+                `âœ† *No. WhatsApp:* ${newMember.whatsapp}`,
+                `â€¢ *Alasan Bergabung:* ${newMember.reason}`,
+                `â€¢ *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
                 ``,
                 `Mohon verifikasi di Portal Admin. Mauliate!`
             ].join('\n');
@@ -2513,7 +2513,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} ➤ WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} â€¢ WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
@@ -2751,110 +2751,77 @@
             `);
         }
 
-        function handleCustomerServiceSubmit(e) {
+        async function handleCustomerServiceSubmit(e) {
             e.preventDefault();
-            const adminEmail = appData.settings.email || 'sekretariat@napososimatupang.org';
             const name = document.getElementById('cs-name').value.trim();
             const contact = document.getElementById('cs-contact').value.trim();
             const subject = document.getElementById('cs-subject').value;
             const message = document.getElementById('cs-message').value.trim();
 
-            const fullSubject = `[Pengaduan Website - ${subject}] dari ${name}`;
-            const fullBody = [
-                `Horas Admin ${appData.settings.orgName},`,
-                ``,
-                `Ada pengaduan/pesan baru melalui tombol Customer Service Website:`,
-                `Nama Pengirim : ${name}`,
-                `Kontak        : ${contact}`,
-                `Kategori      : ${subject}`,
-                ``,
-                `Isi Pesan / Pengaduan:`,
-                message,
-                ``,
-                `Dikirim pada: ${new Date().toLocaleString('id-ID')}`
-            ].join('\n');
-
-            const mailtoUrl = `mailto:${encodeURIComponent(adminEmail)}?subject=${encodeURIComponent(fullSubject)}&body=${encodeURIComponent(fullBody)}`;
-
-            // Jika berjalan di Google Apps Script, kirim email langsung lewat server (Code.gs -> sendComplaintEmail)
-            if (isGasEnvironment()) {
-                openModal(`
-                    <div class="text-center py-6">
-                        <div class="w-12 h-12 mx-auto rounded-full border-2 border-emas-400 border-t-transparent animate-spin mb-4"></div>
-                        <h3 class="text-base font-bold text-white">Mengirim Pengaduan ke Email Admin...</h3>
-                        <p class="text-xs text-slate-400 mt-1">Mohon tunggu sebentar.</p>
-                    </div>
-                `);
-
-                google.script.run
-                    .withSuccessHandler((res) => {
-                        if (res && res.success) {
-                            openModal(`
-                                <div class="text-center">
-                                    <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mb-3">
-                                        <i data-lucide="mail-check" class="w-7 h-7 text-emerald-400"></i>
-                                    </div>
-                                    <h3 class="text-lg font-bold text-white">Pengaduan Terkirim!</h3>
-                                    <p class="text-xs text-slate-300 mt-2 leading-relaxed">
-                                        Pesan pengaduan Anda telah dikirim langsung ke email Admin (<strong class="text-emas-300">${escapeHtml(adminEmail)}</strong>). Terima kasih!
-                                    </p>
-                                    <div class="mt-5">
-                                        <button type="button" onclick="closeModal()" class="w-full py-2.5 rounded-xl bg-gorga-600 hover:bg-gorga-500 text-xs text-white font-bold">
-                                            Selesai
-                                        </button>
-                                    </div>
-                                </div>
-                            `);
-                            showToast('Pengaduan berhasil dikirim langsung ke email Admin.', 'success');
-                        } else {
-                            // Fallback ke mailto jika server MailApp gagal
-                            window.location.href = mailtoUrl;
-                            showToast((res && res.message) || 'Membuka aplikasi email Anda...', 'info');
-                            closeModal();
-                        }
-                    })
-                    .withFailureHandler(() => {
-                        window.location.href = mailtoUrl;
-                        showToast('Membuka aplikasi email Anda untuk mengirim pengaduan.', 'info');
-                        closeModal();
-                    })
-                    .sendComplaintEmail({ name, contact, subject, message });
+            if (!name || !contact || !message) {
+                showToast('Nama, kontak, dan isi pengaduan wajib diisi.', 'error');
                 return;
             }
 
-            // Kirim catatan pengaduan ke server agar tetap masuk walau perangkat tidak punya aplikasi email
-            fetch(PNTS_API_BASE + '/api/public/complaint', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, contact, subject, message })
-            }).catch(() => {});
-
-            // Buka aplikasi email default pengguna sebagai jalur tambahan
-            try {
-                window.location.href = mailtoUrl;
-            } catch (err) {}
+            const submitButton = e.submitter || e.target.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.dataset.originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i><span>Mengirim...</span>';
+            }
 
             openModal(`
-                <div class="text-center">
-                    <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mb-3">
-                        <i data-lucide="mail-check" class="w-7 h-7 text-emerald-400"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-white">Pengaduan Siap Dikirim ke Email Admin</h3>
-                    <p class="text-xs text-slate-300 mt-2 leading-relaxed">
-                        Aplikasi email Anda telah dibuka dan langsung ditujukan ke <strong class="text-emas-300">${escapeHtml(adminEmail)}</strong>. Jika aplikasi email belum terbuka otomatis, klik tombol di bawah ini:
-                    </p>
-                    <div class="mt-5 space-y-2.5">
-                        <a href="${mailtoUrl}" class="w-full py-3 px-4 rounded-xl bg-gorga-600 hover:bg-gorga-500 text-white text-sm font-bold flex items-center justify-center gap-2 transition">
-                            <i data-lucide="external-link" class="w-4 h-4"></i>
-                            <span>Buka Aplikasi Email Sekarang</span>
-                        </a>
-                        <button type="button" onclick="closeModal()" class="w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs text-slate-300 font-semibold">
-                            Selesai
-                        </button>
-                    </div>
+                <div class="text-center py-6">
+                    <div class="w-12 h-12 mx-auto rounded-full border-2 border-emas-400 border-t-transparent animate-spin mb-4"></div>
+                    <h3 class="text-base font-bold text-white">Mengirim Pengaduan...</h3>
+                    <p class="text-xs text-slate-400 mt-1">Pengaduan sedang dikirim ke email admin dan dicatat ke Spreadsheet.</p>
                 </div>
             `);
-            showToast('Formulir pengaduan disinkronkan ke email Admin.', 'success');
+
+            try {
+                const response = await fetch(PNTS_API_BASE + '/api/public/complaint', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, contact, subject, message })
+                });
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Pengaduan belum berhasil dikirim. Silakan coba kembali.');
+                }
+
+                openModal(`
+                    <div class="text-center">
+                        <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center mb-3">
+                            <i data-lucide="mail-check" class="w-7 h-7 text-emerald-400"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white">Pengaduan Berhasil Terkirim!</h3>
+                        <p class="text-xs text-slate-300 mt-2 leading-relaxed">Pengaduan Anda sudah dikirim langsung ke email Admin PNTS DURI dan tersimpan di Spreadsheet.</p>
+                        <p class="text-xs text-emas-300 mt-2">Nomor Pengaduan: ${escapeHtml(result.complaintId || '-')}</p>
+                        <div class="mt-5">
+                            <button type="button" onclick="closeModal()" class="w-full py-2.5 rounded-xl bg-gorga-600 hover:bg-gorga-500 text-xs text-white font-bold">Selesai</button>
+                        </div>
+                    </div>
+                `);
+                showToast('Pengaduan terkirim ke email admin dan tersimpan di Spreadsheet.', 'success');
+                e.target.reset();
+            } catch (err) {
+                openModal(`
+                    <div class="text-center">
+                        <div class="w-14 h-14 mx-auto rounded-2xl bg-red-500/20 border border-red-500/40 flex items-center justify-center mb-3">
+                            <i data-lucide="alert-circle" class="w-7 h-7 text-red-400"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-white">Pengaduan Belum Terkirim</h3>
+                        <p class="text-xs text-slate-300 mt-2 leading-relaxed">${escapeHtml(err.message || 'Terjadi kesalahan saat mengirim pengaduan.')}</p>
+                        <button type="button" onclick="closeModal()" class="mt-5 w-full py-2.5 rounded-xl bg-white/10 text-xs text-white font-bold">Tutup dan Coba Lagi</button>
+                    </div>
+                `);
+                showToast(err.message || 'Gagal mengirim pengaduan.', 'error');
+            } finally {
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    if (submitButton.dataset.originalText) submitButton.innerHTML = submitButton.dataset.originalText;
+                }
+            }
         }
 
         /**
@@ -3167,7 +3134,7 @@
                                     <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</p>
-                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ➤ ${escapeHtml(m.status)} ➤ ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.status)} â€¢ ${escapeHtml(m.sector)}</p>
                                         </div>
                                         <div class="flex items-center gap-1.5 shrink-0">
                                             <button onclick="approveMember('${m.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition">Setujui</button>
@@ -3472,10 +3439,10 @@
                                                 <h4 class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</h4>
                                                 <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase shrink-0 ${getStatusBadgeClass(m.status)}">${escapeHtml(m.status)}</span>
                                             </div>
-                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} ➤ ${escapeHtml(m.gender || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} ➤ Huta: ${escapeHtml(m.huta || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} ➤ Sektor: ${escapeHtml(m.sector)}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} ➤ Daftar: ${formatDateIndo(m.joinedAt)}</p>
+                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.gender || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} â€¢ Huta: ${escapeHtml(m.huta || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} â€¢ Sektor: ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} â€¢ Daftar: ${formatDateIndo(m.joinedAt)}</p>
                                             ${m.reason ? `<p class="text-[11px] text-slate-300 mt-1.5 italic bg-white/5 p-2 rounded-lg">"${escapeHtml(m.reason)}"</p>` : ''}
                                         </div>
                                     </div>
@@ -3547,8 +3514,8 @@
                                                 ${m.photo ? `<img src="${m.photo}" class="w-9 h-11 rounded-lg object-cover border border-white/15 shrink-0">` : ''}
                                                 <div>
                                                     <p class="font-bold text-white">${escapeHtml(m.name)}</p>
-                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? '➤Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
-                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} ➤ ${escapeHtml(m.activity || '-')}</p>` : ''}
+                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? 'â€¢ Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
+                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} â€¢ ${escapeHtml(m.activity || '-')}</p>` : ''}
                                                 </div>
                                             </div>
                                         </td>
@@ -3716,7 +3683,7 @@
                                 </div>
                                 <h4 class="text-base font-bold text-white">${escapeHtml(ev.title)}</h4>
                                 <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">${escapeHtml(ev.description)}</p>
-                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} ➤ <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
+                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} â€¢ <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
                             </div>
                             <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
                                 <button onclick="openEventModal('${ev.id}')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-emas-500/20 text-xs font-semibold text-slate-200 hover:text-emas-300 transition">Edit</button>
@@ -4130,7 +4097,7 @@
                                         <div class="min-w-0">
                                             <span class="text-[11px] font-bold uppercase text-emas-400">${escapeHtml(p.role)}</span>
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(p.name)}</p>
-                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? '➤ ' + escapeHtml(p.period) : ''}</p>
+                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? 'â€¢ ' + escapeHtml(p.period) : ''}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1 shrink-0">
@@ -4443,7 +4410,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 19px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} ➤ WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} â€¢ WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
