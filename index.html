@@ -467,7 +467,7 @@
             </div>
 
             <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">
-                Membuka Sopo Partukkoan PNTS
+                Membuka Sopo Partukkoan Admin
             </h2>
             <p class="text-xs sm:text-sm text-emas-400/90 font-semibold mt-1">
                 Punguan Naposo Toga Simatupang Se-Duri
@@ -563,6 +563,10 @@
                             <span>Masuk ke Panel Admin</span>
                         </button>
                     </form>
+                    <div class="mt-4 p-3 rounded-xl bg-white/[0.03] border border-white/10 text-center">
+                        <p class="text-[11px] text-slate-400 mb-2">Pengurus BPH memiliki portal dan akses terpisah.</p>
+                        <button type="button" onclick="switchView('bph-login')" class="text-sm font-bold text-emas-300 hover:text-emas-200">Login Pengurus BPH &rarr;</button>
+                    </div>
 <div class="mt-6 text-center">
                         <button type="button" onclick="switchView('public')"
                             class="text-sm text-slate-400 hover:text-white transition inline-flex items-center gap-1.5">
@@ -578,6 +582,40 @@
     <!-- ===================================================================== -->
     <!-- HALAMAN KEDUA: HALAMAN ADMIN (FULL ACCESS CONTROL PANEL)              -->
     <!-- ===================================================================== -->
+    <div id="bph-login-view" class="hidden min-h-screen flex items-center justify-center p-4 gorga-bg-pattern relative">
+        <div class="absolute inset-0 bg-gradient-to-b from-gorga-900/20 via-obsidian/80 to-obsidian pointer-events-none"></div>
+        <div class="relative z-10 w-full max-w-md glass-panel rounded-2xl overflow-hidden shadow-2xl border border-white/15">
+            <div class="ulos-strip"></div>
+            <div class="p-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-gorga-600 to-gorga-900 border border-emas-500/40 flex items-center justify-center mb-4"><i data-lucide="users" class="w-8 h-8 text-emas-400"></i></div>
+                    <h1 class="text-2xl font-bold text-white">Portal BPH PNTS DURI</h1>
+                    <p class="text-sm text-slate-400 mt-1">Masuk sesuai akun dan jabatan masing-masing</p>
+                </div>
+                <form id="bph-login-form" onsubmit="handleBphLoginSubmit(event)" class="space-y-4">
+                    <div><label class="block text-xs font-semibold uppercase text-slate-300 mb-1.5">Username</label><input id="bph-login-username" autocomplete="username" required class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white" placeholder="Contoh: evi"></div>
+                    <div><label class="block text-xs font-semibold uppercase text-slate-300 mb-1.5">Password</label><input id="bph-login-password" type="password" autocomplete="current-password" required class="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white" placeholder="Masukkan password"></div>
+                    <div id="bph-login-error" class="hidden text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded-lg p-3"></div>
+                    <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-gorga-600 to-gorga-700 text-white font-bold">Masuk Portal BPH</button>
+                </form>
+                <div class="mt-5 text-center"><button type="button" onclick="switchView('admin-login')" class="text-xs text-slate-400 hover:text-white">Kembali ke Login Admin</button><span class="text-slate-600 mx-2">|</span><button type="button" onclick="switchView('public')" class="text-xs text-slate-400 hover:text-white">Halaman Pengunjung</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="bph-dashboard-view" class="hidden min-h-screen bg-[#070709] text-white">
+        <header class="sticky top-0 z-30 border-b border-white/10 bg-[#0C0D12]/95 backdrop-blur-xl">
+            <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+                <div><p class="text-[10px] uppercase tracking-[0.2em] text-emas-400">PNTS DURI â€¢ PORTAL BPH</p><h1 id="bph-welcome-title" class="text-lg sm:text-xl font-extrabold">Selamat datang</h1><p id="bph-role-label" class="text-xs text-slate-400"></p></div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="scrollToBphInbox()" class="relative px-3 py-2 rounded-xl bg-emas-500/10 border border-emas-500/30 text-emas-200 text-xs font-bold flex items-center gap-2"><i data-lucide="mail" class="w-4 h-4"></i><span class="hidden sm:inline">Kotak Masuk</span><span id="bph-inbox-badge" class="hidden absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-red-500 text-white text-[10px] items-center justify-center">0</span></button>
+                    <button type="button" onclick="handleBphLogout()" class="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-bold flex items-center gap-2"><i data-lucide="log-out" class="w-4 h-4"></i> Keluar</button>
+                </div>
+            </div>
+        </header>
+        <main id="bph-main-content" class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8"></main>
+    </div>
+
     <div id="admin-dashboard-view" class="hidden min-h-screen flex bg-[#070709]">
         <!-- Mobile Sidebar Backdrop -->
         <div id="admin-sidebar-backdrop" onclick="toggleAdminMobileSidebar(false)" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden lg:hidden"></div>
@@ -664,6 +702,11 @@
         const STORAGE_KEY = 'punguan_toga_naposo_simatupang_v1';
         const PNTS_API_BASE = 'https://polished-tooth-6e33.marelihulu88.workers.dev';
         let pntsAdminToken = sessionStorage.getItem('pnts_admin_token') || '';
+        let pntsBphToken = sessionStorage.getItem('pnts_bph_token') || '';
+        let pntsBphUser = null;
+        let pntsBphData = {};
+        let pntsBphInbox = { messages: [], reports: [] };
+        let pntsBphUsers = [];
         let pntsCloudReady = false;
         let pntsCloudSaveTimer = null;
         let pntsCloudSaveQueue = Promise.resolve();
@@ -807,6 +850,9 @@
                 { id: 'f5', date: '2026-11-16', description: 'Sumbangan Donatur Tetap (Natua-tua Simatupang)', type: 'in', amount: 2500000 },
                 { id: 'f6', date: '2026-11-20', description: 'Uang Muka Sewa Gedung Natal 2026', type: 'out', amount: 1500000 }
             ],
+            spiritual: { warta: '', partangiangan: '', updatedAt: '', updatedBy: '' },
+            secretariat: [],
+            leadership: { notes: '', updatedAt: '', updatedBy: '' },
             reviews: [
                 { id: 'r1', name: 'Bpk. H. Togatorop', role: 'Natua-tua / Orang Tua', rating: 5, comment: 'Sangat bangga melihat Naposo Toga Simatupang semakin kompak dan modern. Transparansi kas dan agendanya sangat jelas!', date: '2026-11-18', status: 'approved' },
                 { id: 'r2', name: 'Sinta Br. Sianturi', role: 'Boru - Sektor Timur', rating: 5, comment: 'Horas! Kekeluargaannya luar biasa hangat, terutama bagi kami yang baru merantau. Semangat terus untuk seluruh pengurus BPH.', date: '2026-11-20', status: 'approved' },
@@ -858,7 +904,7 @@
         // 2. APPLICATION STATE & LOCALSTORAGE ENGINE
         // =====================================================================
         let appData = loadData();
-        let currentView = 'public'; // 'public' | 'admin-login' | 'admin'
+        let currentView = 'public'; // 'public' | 'admin-login' | 'admin' | 'bph-login' | 'bph'
         let isAdminLoggedIn = false;
         let currentAdminTab = 'dashboard'; // 'dashboard' | 'site' | 'members' | 'events' | 'announcements' | 'albums' | 'bph_finance' | 'reviews' | 'visitors' | 'settings'
         let publicDirFilter = 'Semua';
@@ -913,6 +959,9 @@
                 },
                 adminAuth: { ...DEFAULT_DATA.adminAuth, ...(parsed.adminAuth || {}) },
                 reviews: Array.isArray(parsed.reviews) ? parsed.reviews : JSON.parse(JSON.stringify(DEFAULT_DATA.reviews)),
+                spiritual: { ...DEFAULT_DATA.spiritual, ...(parsed.spiritual || {}) },
+                secretariat: Array.isArray(parsed.secretariat) ? parsed.secretariat : [],
+                leadership: { ...DEFAULT_DATA.leadership, ...(parsed.leadership || {}) },
                 visitorLogs: Array.isArray(parsed.visitorLogs) ? parsed.visitorLogs : JSON.parse(JSON.stringify(DEFAULT_DATA.visitorLogs)),
                 albums: Array.isArray(parsed.albums) ? parsed.albums : JSON.parse(JSON.stringify(DEFAULT_DATA.albums))
             };
@@ -968,6 +1017,16 @@
             return result;
         }
 
+        async function pntsBphApi(path, options = {}) {
+            const headers = { ...(options.headers || {}) };
+            if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+            if (pntsBphToken) headers.Authorization = 'Bearer ' + pntsBphToken;
+            const response = await fetch(PNTS_API_BASE + path, { cache: 'no-store', ...options, headers });
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok || result.success === false) throw new Error(result.message || result.error || ('Permintaan BPH gagal (' + response.status + ').'));
+            return result;
+        }
+
         async function uploadDataUrlToDrive(dataUrl, category, name) {
             if (!/^data:image\/(jpeg|png|webp);base64,/i.test(dataUrl)) return dataUrl;
             const comma = dataUrl.indexOf(',');
@@ -1017,16 +1076,25 @@
                     throw new Error(saved.message || 'Server belum mengonfirmasi penyimpanan.');
                 }
 
+                // Simpan nomor revisi agar perubahan BPH yang masuk saat Admin masih membuka
+                // halaman tidak tertimpa oleh snapshot lama pada penyimpanan berikutnya.
+                if (typeof saved.revision === 'number') cloudData._bphRevision = saved.revision;
+
                 // Code.gs sudah melakukan verifikasi baca-ulang terhadap APP_DATA
                 // sebelum mengirim success:true. Tidak perlu GET seluruh database sekali lagi
                 // dari browser karena itu membuat proses simpan menjadi jauh lebih lambat.
                 // Respons sukses dari Worker hanya diterima setelah Code.gs selesai memverifikasi.
+
+                // Revisi terbaru harus ikut ke snapshot lokal, termasuk bila ada perubahan
+                // Admin lain yang dibuat ketika permintaan simpan sedang berjalan.
+                if (typeof saved.revision === 'number') appData._bphRevision = saved.revision;
 
                 // Jangan timpa perubahan baru yang dibuat saat proses upload/simpan berlangsung.
                 if (revisionAtStart === pntsLocalRevision) {
                     appData = mergeWithDefaultData(cloudData);
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
                 } else {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
                     scheduleCloudSave();
                 }
                 console.info('PNTS DURI tersimpan dan diverifikasi di Spreadsheet:', saved);
@@ -1094,7 +1162,8 @@
             if (Object.keys(serverData).length === 0) {
                 const initial = JSON.parse(JSON.stringify(appData));
                 const cloudData = await prepareCloudData(initial);
-                await pntsApi('/api/data', { method: 'PUT', body: JSON.stringify({ data: cloudData }) });
+                const migrated = await pntsApi('/api/data', { method: 'PUT', body: JSON.stringify({ data: cloudData }) });
+                if (typeof migrated.revision === 'number') cloudData._bphRevision = migrated.revision;
                 appData = mergeWithDefaultData(cloudData);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
                 showToast('Data lama berhasil dipindahkan ke database PNTS DURI.', 'success');
@@ -1501,6 +1570,8 @@
             document.getElementById('public-view').classList.add('hidden');
             document.getElementById('admin-login-view').classList.add('hidden');
             document.getElementById('admin-dashboard-view').classList.add('hidden');
+            document.getElementById('bph-login-view').classList.add('hidden');
+            document.getElementById('bph-dashboard-view').classList.add('hidden');
 
             const csBtn = document.getElementById('floating-cs-wrapper');
             if (csBtn) {
@@ -1523,6 +1594,14 @@
                     loginLogo.innerHTML = getGorgaLogoSVG('w-16 h-16');
                 }
                 refreshIcons();
+            } else if (targetView === 'bph-login') {
+                document.getElementById('bph-login-view').classList.remove('hidden');
+                const f = document.getElementById('bph-login-error'); if (f) f.classList.add('hidden');
+                refreshIcons();
+            } else if (targetView === 'bph') {
+                document.getElementById('bph-dashboard-view').classList.remove('hidden');
+                renderBphPortal();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             } else if (targetView === 'admin') {
                 document.getElementById('admin-dashboard-view').classList.remove('hidden');
                 const sidebarLogo = document.getElementById('admin-sidebar-logo');
@@ -2547,17 +2626,17 @@
                 `*HORAS! PENDAFTARAN ANGGOTA BARU*`,
                 `_${appData.settings.orgName}_`,
                 ``,
-                `• *Nama Lengkap:* ${newMember.name}`,
-                `• *Jenis Kelamin:* ${newMember.gender}`,
-                `• *Status:* ${newMember.status}`,
-                `• *Marga / Sub-Marga:* ${newMember.marga}`,
-                `• *Tubuni Br.:* ${newMember.tubuniBr}`,
-                `• *Asal (Huta):* ${newMember.huta}`,
-                `• *Aktivitas:* ${newMember.activity}`,
-                `• *Sektor Domisili:* ${newMember.sector}`,
-                `• *No. WhatsApp:* ${newMember.whatsapp}`,
-                `• *Alasan Bergabung:* ${newMember.reason}`,
-                `• *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
+                `â€¢ *Nama Lengkap:* ${newMember.name}`,
+                `â€¢ *Jenis Kelamin:* ${newMember.gender}`,
+                `â€ªâ€ªâ€¢â€¬ *Status:* ${newMember.status}`,
+                `â€¢ *Marga / Sub-Marga:* ${newMember.marga}`,
+                `â€¢ *Tubuni Br.:* ${newMember.tubuniBr}`,
+                `â€¢ *Asal (Huta):* ${newMember.huta}`,
+                `â€¢ *Aktivitas:* ${newMember.activity}`,
+                `â€¢ *Sektor Domisili:* ${newMember.sector}`,
+                `âœ† *No. WhatsApp:* ${newMember.whatsapp}`,
+                `â€¢ *Alasan Bergabung:* ${newMember.reason}`,
+                `â€¢ *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
                 ``,
                 `Mohon verifikasi di Portal Admin. Mauliate!`
             ].join('\n');
@@ -2600,7 +2679,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} • WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} â€¢ WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
@@ -3105,7 +3184,9 @@
                 { id: 'reviews', label: 'Kontrol Ulasan', icon: 'star', badge: pendingReviewCount },
                 { id: 'visitors', label: 'Riwayat Pengunjung', icon: 'activity' },
                 { id: 'profile_vision_mission', label: 'Profil, Visi & Misi Punguan', icon: 'book-open' },
-                { id: 'settings', label: 'Pengaturan & Data', icon: 'settings' }
+                { id: 'settings', label: 'Pengaturan & Data', icon: 'settings' },
+                { id: 'bph_accounts', label: 'Manajemen Akun BPH', icon: 'shield-check' },
+                { id: 'bph_reports', label: 'Laporan Kinerja BPH', icon: 'clipboard-list' }
             ];
 
             document.getElementById('admin-nav-links').innerHTML = tabs.map(t => {
@@ -3139,8 +3220,248 @@
                 case 'visitors': renderAdminTabVisitors(main); break;
                 case 'profile_vision_mission': renderAdminTabProfileVisionMission(main); break;
                 case 'settings': renderAdminTabSettings(main); break;
+                case 'bph_accounts': renderAdminTabBphAccounts(main); break;
+                case 'bph_reports': renderAdminTabBphReports(main); break;
             }
             refreshIcons();
+        }
+
+
+        // --- ADMIN TAB: MANAJEMEN AKUN BPH (KREDENSIAL DI SERVER) ---
+        const PNTS_BPH_ROSTER = [
+            { name: 'Albert', role: 'ketua', label: 'Ketua' },
+            { name: 'Sarbenni', role: 'wakil_ketua', label: 'Wakil Ketua' },
+            { name: 'Adi', role: 'sekretaris', label: 'Sekretaris' },
+            { name: 'Evi', role: 'bendahara', label: 'Bendahara' },
+            { name: 'Faisal', role: 'humas', label: 'Seksi Humas' },
+            { name: 'Ivand', role: 'wakil_humas', label: 'Wakil Seksi Humas' },
+            { name: 'Jespri', role: 'olahraga', label: 'Seksi Olahraga' },
+            { name: 'Iin', role: 'rohani', label: 'Seksi Rohani' },
+            { name: 'Putra', role: 'dokumentasi', label: 'Seksi Dokumentasi' },
+            { name: 'Mike', role: 'wakil_dokumentasi', label: 'Wakil Seksi Dokumentasi' }
+        ];
+
+        async function renderAdminTabBphAccounts(container) {
+            container.innerHTML = `<div class="glass-panel rounded-2xl p-6"><h3 class="text-lg font-bold text-white">Manajemen Akun BPH</h3><p class="text-sm text-slate-400 mt-1">Buat akun, atur password, atau aktif/nonaktifkan akun. Password disimpan sebagai hash di Google Spreadsheet dan tidak ditampilkan kembali.</p><div id="bph-account-list" class="mt-5 text-sm text-slate-400">Memuat status akun...</div></div><div class="grid md:grid-cols-2 gap-4 mt-5">${PNTS_BPH_ROSTER.map((u,i)=>`<form onsubmit="saveBphAccount(event,${i})" class="glass-panel rounded-2xl p-5 space-y-3"><div class="flex items-center justify-between"><div><p class="font-bold text-white">${u.name}</p><p class="text-xs text-emas-300">${u.label}</p></div><span id="bph-status-${i}" class="text-[10px] text-slate-500">Belum diperiksa</span></div><input type="hidden" name="username" value="${u.name.toLowerCase()}"><label class="block text-[11px] text-slate-400">Password ${u.name} (minimal 8 karakter; kosongkan jika tidak ingin mengganti password)</label><input name="password" type="password" minlength="8" autocomplete="new-password" placeholder="Masukkan password awal / baru" class="w-full px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white"><label class="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" name="active" checked class="accent-emerald-500"> Akun aktif</label><button type="submit" class="w-full py-2.5 rounded-xl bg-gorga-600 hover:bg-gorga-500 text-white text-xs font-bold">Simpan Akun ${u.name}</button></form>`).join('')}</div><div class="mt-5 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5 text-xs text-amber-200">Penting: buat password berbeda untuk setiap pengurus dan sampaikan secara pribadi. Jangan gunakan password Admin.</div>`;
+            try {
+                const r = await pntsApi('/api/admin/bph-users', { method: 'GET' });
+                pntsBphUsers = r.users || [];
+                PNTS_BPH_ROSTER.forEach((u,i)=>{
+                    const found = pntsBphUsers.find(x=>x.username===u.name.toLowerCase());
+                    const el = document.getElementById('bph-status-'+i);
+                    if (el) { el.textContent = found ? (found.active ? 'AKTIF' : 'NONAKTIF') : 'BELUM DIBUAT'; el.className = 'text-[10px] font-bold '+(found && found.active ? 'text-emerald-300' : 'text-amber-300'); }
+                });
+                const list = document.getElementById('bph-account-list');
+                if (list) list.innerHTML = pntsBphUsers.length ? `<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">${pntsBphUsers.map(u=>`<div class="rounded-lg bg-white/[0.03] border border-white/10 px-3 py-2"><b class="text-white">${escapeHtml(u.name)}</b><div class="text-[11px] text-slate-400">@${escapeHtml(u.username)} â€¢ ${escapeHtml(u.roleLabel)} â€¢ <span class="${u.active?'text-emerald-300':'text-red-300'}">${u.active?'Aktif':'Nonaktif'}</span></div></div>`).join('')}</div>` : 'Belum ada akun BPH yang dibuat. Isi password pada kartu pengurus, lalu tekan Simpan.';
+            } catch (err) {
+                const list = document.getElementById('bph-account-list');
+                if (list) list.innerHTML = `<span class="text-red-300">Gagal memuat akun: ${escapeHtml(err.message)}. Pastikan Worker dan Code.gs versi BPH sudah dipasang.</span>`;
+            }
+        }
+
+        async function saveBphAccount(event, index) {
+            event.preventDefault();
+            const form = event.target;
+            const u = PNTS_BPH_ROSTER[index];
+            const password = form.elements.password.value;
+            try {
+                await pntsApi('/api/admin/bph-users', { method: 'POST', body: JSON.stringify({ user: { username: u.name.toLowerCase(), name: u.name, role: u.role, password, active: form.elements.active.checked } }) });
+                form.elements.password.value = '';
+                showToast('Akun BPH ' + u.name + ' berhasil disimpan.', 'success');
+                await renderAdminTabBphAccounts(document.getElementById('admin-main-content'));
+            } catch (err) { showToast('Gagal menyimpan akun: ' + err.message, 'error'); }
+        }
+
+
+        // =====================================================================
+        // PORTAL BPH: ANTARMUKA TERPISAH DENGAN AKSES PER JABATAN
+        // =====================================================================
+        async function handleBphLoginSubmit(event) {
+            event.preventDefault();
+            const username = document.getElementById('bph-login-username').value.trim().toLowerCase();
+            const password = document.getElementById('bph-login-password').value;
+            const errBox = document.getElementById('bph-login-error');
+            errBox.classList.add('hidden');
+            try {
+                const response = await fetch(PNTS_API_BASE + '/api/bph/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+                const result = await response.json().catch(()=>({}));
+                if (!response.ok || !result.success || !result.token) throw new Error(result.message || 'Login BPH gagal.');
+                pntsBphToken = result.token; pntsBphUser = result.user; sessionStorage.setItem('pnts_bph_token', pntsBphToken);
+                await loadBphData();
+                event.target.reset(); switchView('bph');
+                showToast('Horas! Selamat datang di Portal BPH.', 'success');
+            } catch (err) { errBox.textContent = err.message; errBox.classList.remove('hidden'); }
+        }
+
+        async function loadBphData() {
+            const r = await pntsBphApi('/api/bph/data', { method: 'GET' });
+            pntsBphUser = r.user || pntsBphUser; pntsBphData = r.data || {};
+            try { pntsBphInbox = await pntsBphApi('/api/bph/inbox', { method: 'GET' }); } catch (_) { pntsBphInbox = {messages:[],reports:[]}; }
+            if (pntsBphUser && pntsBphUser.role === 'sekretaris') {
+                try { const m = await pntsBphApi('/api/bph/members', { method: 'GET' }); pntsBphData.members = m.members || []; } catch (_) {}
+            }
+        }
+        async function scrollToBphInbox() { const el=document.getElementById('bph-inbox-panel'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); try { await pntsBphApi('/api/bph/inbox/read',{method:'POST',body:JSON.stringify({})}); await loadBphData(); renderBphPortal(); } catch (_) {} }
+
+
+        function handleBphLogout() {
+            pntsBphToken = ''; pntsBphUser = null; pntsBphData = {}; pntsBphInbox = {messages:[],reports:[]};
+            sessionStorage.removeItem('pnts_bph_token'); switchView('public');
+            showToast('Anda telah keluar dari Portal BPH.', 'info');
+        }
+
+        async function saveBphSection(section, data) {
+            try {
+                await pntsBphApi('/api/bph/update', { method: 'PUT', body: JSON.stringify({ section, data }) });
+                await loadBphData(); renderBphPortal();
+                showToast('Data berhasil disimpan ke database PNTS.', 'success');
+            } catch (err) { showToast('Gagal menyimpan: ' + err.message, 'error'); }
+        }
+
+        function bphDeleteItem(section, id) {
+            const key = section === 'sports' ? 'events' : section === 'documentation' ? 'albums' : section;
+            const rows = Array.isArray(pntsBphData[key]) ? [...pntsBphData[key]] : [];
+            const next = rows.filter(x => x.id !== id);
+            saveBphSection(section, next);
+        }
+
+        async function bphRefreshAndRender() { await loadBphData(); renderBphPortal(); }
+        async function bphReplyReport(reportId, decision) {
+            const label = decision === 'ACCEPT' ? 'SIAP DIPERBAIKI' : 'TOLAK PERBAIKAN';
+            if (!confirm('Konfirmasi pilihan: ' + label + '?')) return;
+            let note = '';
+            if (decision === 'REJECT') { note = (window.prompt('Tuliskan alasan penolakan perbaikan:') || '').trim(); if (!note) { showToast('Alasan penolakan wajib diisi.','error'); return; } }
+            try { const r=await pntsBphApi('/api/bph/reports/respond',{method:'POST',body:JSON.stringify({reportId,decision,note})}); showToast(r.message||'Tanggapan terkirim.','success'); await bphRefreshAndRender(); }
+            catch(err){showToast(err.message,'error');}
+        }
+        async function bphSendReportUpdate(reportId) {
+            const el=document.getElementById('bph-update-'+reportId), update=(el&&el.value||'').trim();
+            if(!update){showToast('Tuliskan hasil perbaikan terlebih dahulu.','error');return;}
+            if(!confirm('Kirim pembaruan perbaikan kepada Ketua dan Wakil Ketua?'))return;
+            try{const r=await pntsBphApi('/api/bph/reports/update',{method:'POST',body:JSON.stringify({reportId,update})});showToast(r.message||'Pembaruan terkirim.','success');await bphRefreshAndRender();}
+            catch(err){showToast(err.message,'error');}
+        }
+        async function bphCreatePerformanceReport(e) {
+            e.preventDefault(); const f=e.target;
+            const report={targetUsername:f.elements.target.value,section:f.elements.section.value,control:f.elements.control.value,details:f.elements.details.value.trim()};
+            try{const r=await pntsBphApi('/api/bph/reports',{method:'POST',body:JSON.stringify({report})});showToast(r.message||'Laporan terkirim.','success');f.reset();await bphRefreshAndRender();}
+            catch(err){showToast(err.message,'error');}
+        }
+        async function bphSecretaryMemberAction(actionType,id) {
+            if(actionType!=='approve' && actionType!=='reject' && actionType!=='delete')return;
+            if(!confirm(actionType==='approve'?'Setujui anggota ini?':actionType==='reject'?'Tolak pendaftaran anggota ini?':'Hapus anggota ini?'))return;
+            try{const r=await pntsBphApi('/api/bph/members',{method:'POST',body:JSON.stringify({actionType,member:{id}})});showToast(r.message||'Data anggota diperbarui.','success');await bphRefreshAndRender();}
+            catch(err){showToast(err.message,'error');}
+        }
+        async function bphSecretaryAddMember(e) {
+            e.preventDefault();const f=e.target;const member={name:f.elements.name.value.trim(),marga:f.elements.marga.value.trim(),whatsapp:f.elements.whatsapp.value.trim(),sector:f.elements.sector.value.trim(),tubuniBr:f.elements.tubuniBr.value.trim(),huta:f.elements.huta.value.trim(),gender:f.elements.gender.value,status:f.elements.status.value};
+            try{const r=await pntsBphApi('/api/bph/members',{method:'POST',body:JSON.stringify({actionType:'add',member})});showToast(r.message||'Anggota ditambahkan.','success');f.reset();await bphRefreshAndRender();}
+            catch(err){showToast(err.message,'error');}
+        }
+
+        function renderBphPortal() {
+            const main = document.getElementById('bph-main-content');
+            if (!main || !pntsBphUser) return;
+            document.getElementById('bph-welcome-title').textContent = 'Horas, ' + pntsBphUser.name + '!';
+            document.getElementById('bph-role-label').textContent = pntsBphUser.roleLabel + ' â€¢ Akses dibatasi sesuai jabatan';
+            const role = pntsBphUser.role, d = pntsBphData || {};
+            const panel = (title, desc, body) => `<section class="glass-panel rounded-2xl p-5 sm:p-6 mb-5"><div class="mb-4"><h2 class="text-lg font-extrabold text-white">${title}</h2><p class="text-xs text-slate-400 mt-1">${desc}</p></div>${body}</section>`;
+            let html = `<div class="mb-5 rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-4 text-xs text-emerald-200">Anda masuk sebagai <b>${escapeHtml(pntsBphUser.roleLabel)}</b>. Sistem hanya mengizinkan perubahan pada bagian yang menjadi tugas jabatan Anda.</div>`;
+            const messages=(pntsBphInbox.messages||[]), unread=messages.filter(m=>m.status==='UNREAD').length;
+            const badge=document.getElementById('bph-inbox-badge'); if(badge){badge.textContent=unread;badge.classList.toggle('hidden',unread===0);badge.classList.toggle('flex',unread>0);}
+            const reportCards=(pntsBphInbox.reports||[]).filter(r=>r.targetUsername===pntsBphUser.username).map(r=>{
+                const statusLabel=String(r.status||'').replaceAll('_',' ');
+                let actions='';
+                if(r.status==='MENUNGGU_TANGGAPAN') actions=`<div class="flex flex-wrap gap-2 mt-3"><button onclick="bphReplyReport('${r.id}','ACCEPT')" class="px-3 py-2 rounded-lg bg-emerald-600 text-white text-xs font-bold">SIAP DIPERBAIKI</button><button onclick="bphReplyReport('${r.id}','REJECT')" class="px-3 py-2 rounded-lg bg-red-600 text-white text-xs font-bold">TOLAK PERBAIKAN</button></div>`;
+                else if(r.status==='DITERIMA_PERBAIKAN') actions=`<div class="mt-3"><textarea id="bph-update-${r.id}" rows="3" placeholder="Tuliskan hasil perbaikan yang sudah dilakukan..." class="w-full p-3 rounded-lg bg-white/5 border border-white/10 text-white text-xs"></textarea><button onclick="bphSendReportUpdate('${r.id}')" class="mt-2 px-3 py-2 rounded-lg bg-gorga-600 text-white text-xs font-bold">Kirim Pembaruan</button></div>`;
+                return `<div class="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4"><div class="flex items-center justify-between gap-2"><b class="text-sm text-amber-200">âš ï¸ Laporan dari ${escapeHtml(r.reporterName)}</b><span class="text-[10px] text-amber-200">${escapeHtml(statusLabel)}</span></div><p class="text-xs text-white mt-2"><b>Bagian:</b> ${escapeHtml(r.section)} â€¢ <b>Kontrol:</b> ${escapeHtml(r.control)}</p><p class="text-xs text-slate-300 mt-2 whitespace-pre-wrap">${escapeHtml(r.details)}</p>${r.answer?`<p class="text-xs text-slate-300 mt-2"><b>Catatan:</b> ${escapeHtml(r.answer)}</p>`:''}${actions}</div>`;
+            }).join('');
+            const inboxRows=messages.map(m=>`<div class="rounded-lg bg-white/[0.04] border border-white/10 p-3"><div class="flex justify-between gap-2"><b class="text-xs text-white">${escapeHtml(m.title)}</b><span class="text-[10px] ${m.status==='UNREAD'?'text-amber-300':'text-slate-500'}">${m.status==='UNREAD'?'BARU':'DIBACA'}</span></div><p class="text-[11px] text-slate-300 mt-1">${escapeHtml(m.message)}</p><p class="text-[10px] text-slate-500 mt-1">Dari: ${escapeHtml(m.fromName)}</p></div>`).join('');
+            html += `<div id="bph-inbox-panel"></div>` + panel('Kotak Masuk','Pesan, laporan kinerja, dan pemberitahuan untuk akun Anda.',`${reportCards||''}<div class="space-y-2 ${reportCards?'mt-3':''}">${inboxRows||'<p class="text-xs text-slate-400">Belum ada pesan masuk.</p>'}</div>`);
+            if(role==='ketua'||role==='wakil_ketua') {
+                const staff=PNTS_BPH_ROSTER.filter(x=>!['ketua','wakil_ketua'].includes(x.role));
+                const sent=(pntsBphInbox.reports||[]).filter(r=>r.reporterUsername===pntsBphUser.username);
+                html += panel('Laporkan Kinerja Pengurus','Pilih pengurus, bagian yang tidak sesuai, kontrol pemeriksaan, lalu tulis penjelasan yang harus diperbaiki.',`<form onsubmit="bphCreatePerformanceReport(event)" class="grid sm:grid-cols-2 gap-3"><label class="text-xs text-slate-300">Pengurus yang dilaporkan<select name="target" required class="mt-1 w-full p-3 rounded-lg bg-[#14161F] border border-white/10 text-white">${staff.map(x=>`<option value="${x.name.toLowerCase()}">${x.name} â€” ${x.label}</option>`).join('')}</select></label><label class="text-xs text-slate-300">Bagian<select name="section" required class="mt-1 w-full p-3 rounded-lg bg-[#14161F] border border-white/10 text-white"><option>Administrasi Kesekretariatan</option><option>Keuangan / Kas</option><option>Humas / Pengumuman</option><option>Kegiatan Olahraga</option><option>Rohani / Warta / Partangiangan</option><option>Dokumentasi / Album</option><option>Keanggotaan</option><option>Lainnya</option></select></label><label class="sm:col-span-2 text-xs text-slate-300">Kontrol pemeriksaan<select name="control" required class="mt-1 w-full p-3 rounded-lg bg-[#14161F] border border-white/10 text-white"><option value="">Pilih ketidaksesuaian</option><option>Data atau laporan tidak lengkap</option><option>Data atau nominal tidak sesuai</option><option>Terlambat dari jadwal</option><option>Tugas belum dilaksanakan</option><option>Dokumentasi atau bukti belum tersedia</option><option>Tidak sesuai arahan Ketua/Wakil Ketua</option><option>Komunikasi atau koordinasi belum berjalan</option><option>Lainnya</option></select></label><label class="sm:col-span-2 text-xs text-slate-300">Catatan dan arahan perbaikan<textarea name="details" required rows="4" maxlength="3000" placeholder="Jelaskan bagian mana yang salah dan apa yang harus diperbaiki..." class="mt-1 w-full p-3 rounded-lg bg-white/5 border border-white/10 text-white"></textarea></label><button class="sm:col-span-2 px-4 py-3 rounded-lg bg-gorga-600 text-white text-xs font-bold">Kirim Laporan ke Pengurus</button></form><div class="mt-5 space-y-2">${sent.map(r=>`<div class="rounded-lg bg-white/[0.04] p-3 text-xs"><b>${escapeHtml(r.targetName)}</b> â€¢ ${escapeHtml(r.section)}<span class="float-right text-emas-300">${escapeHtml(r.status.replaceAll('_',' '))}</span><p class="text-slate-400 mt-1">${escapeHtml(r.control)}</p>${r.answer?`<p class="text-slate-300 mt-1">Tanggapan/pembaruan: ${escapeHtml(r.answer)}</p>`:''}</div>`).join('')||'<p class="text-xs text-slate-500">Belum ada laporan yang dikirim.</p>'}</div>`);
+            }
+
+            if (role === 'ketua' || role === 'wakil_ketua') {
+                const counts = [['Pengurus BPH',(d.bph||[]).length],['Catatan Kas',(d.finance||[]).length],['Pengumuman',(d.announcements||[]).length],['Agenda',(d.events||[]).length],['Foto Dokumentasi',(d.albums||[]).length],['Administrasi',(d.secretariat||[]).length]];
+                html += panel('Ringkasan Data BPH','Ketua dan Wakil Ketua dapat melihat ringkasan seluruh bagian BPH.',`<div class="grid grid-cols-2 md:grid-cols-3 gap-3">${counts.map(x=>`<div class="rounded-xl bg-white/[0.04] border border-white/10 p-4"><p class="text-xs text-slate-400">${x[0]}</p><p class="text-2xl font-black text-emas-300">${x[1]}</p></div>`).join('')}</div><div class="mt-4 space-y-2">${(d.bph||[]).map(x=>`<div class="text-xs text-slate-300 border-b border-white/5 py-2"><b>${escapeHtml(x.name)}</b> â€” ${escapeHtml(x.role)}</div>`).join('')}</div>`);
+                html += panel('Catatan Arahan Ketua / Wakil Ketua','Bagian ini dapat diperbarui oleh Ketua atau Wakil Ketua.',`<textarea id="bph-leadership-notes" rows="5" class="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white" placeholder="Tulis arahan atau catatan koordinasi BPH...">${escapeHtml((d.leadership||{}).notes||'')}</textarea><button onclick="saveBphSection('leadership',{notes:document.getElementById('bph-leadership-notes').value})" class="mt-3 px-4 py-2 rounded-xl bg-gorga-600 text-white text-xs font-bold">Simpan Catatan</button>`);
+                const finRows=d.finance||[], annRows=d.announcements||[], eventRows=d.events||[], albumRows=d.albums||[], secRows=d.secretariat||[];
+                html += panel('Pemantauan Seluruh Bagian BPH','Ketua dan Wakil Ketua dapat membaca rincian pekerjaan setiap seksi. Bagian ini hanya untuk pemantauan; perubahan tetap dilakukan oleh pengurus yang berwenang.',`<div class="space-y-4"><div><h3 class="text-sm font-bold text-emas-300">Bendahara â€¢ Kas</h3><div class="space-y-1 mt-2">${finRows.slice(0,30).map(x=>`<p class="text-xs text-slate-300">${escapeHtml(x.date)} â€” ${escapeHtml(x.description)} â€” ${formatRupiah(x.amount)} (${x.type==='out'?'Keluar':'Masuk'})</p>`).join('')||'<p class="text-xs text-slate-500">Belum ada transaksi.</p>'}</div></div><div><h3 class="text-sm font-bold text-emas-300">Humas â€¢ Berita & Pengumuman</h3><div class="space-y-1 mt-2">${annRows.map(x=>`<p class="text-xs text-slate-300"><b>${escapeHtml(x.title)}</b> â€” ${escapeHtml(x.content)}</p>`).join('')||'<p class="text-xs text-slate-500">Belum ada pengumuman.</p>'}</div></div><div><h3 class="text-sm font-bold text-emas-300">Olahraga â€¢ Agenda</h3><div class="space-y-1 mt-2">${eventRows.map(x=>`<p class="text-xs text-slate-300">${escapeHtml(x.date)} â€” <b>${escapeHtml(x.title)}</b> â€” ${escapeHtml(x.location||'')}</p>`).join('')||'<p class="text-xs text-slate-500">Belum ada agenda.</p>'}</div></div><div><h3 class="text-sm font-bold text-emas-300">Dokumentasi â€¢ Album</h3><div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">${albumRows.slice(0,20).map(x=>`<div class="rounded-lg bg-white/5 p-2"><img src="${escapeHtml(x.image||'')}" class="w-full h-20 object-cover rounded" onerror="this.style.display='none'"><p class="text-[10px] text-slate-300 mt-1">${escapeHtml(x.title)}</p></div>`).join('')||'<p class="text-xs text-slate-500">Belum ada dokumentasi.</p>'}</div></div><div><h3 class="text-sm font-bold text-emas-300">Sekretaris â€¢ Administrasi</h3><div class="space-y-1 mt-2">${secRows.map(x=>`<p class="text-xs text-slate-300"><b>${escapeHtml(x.title)}</b> â€” ${escapeHtml(x.type)} â€” ${escapeHtml(x.notes)}</p>`).join('')||'<p class="text-xs text-slate-500">Belum ada catatan administrasi.</p>'}</div></div><div><h3 class="text-sm font-bold text-emas-300">Rohani â€¢ Warta & Partangiangan</h3><p class="text-xs text-slate-300 mt-2 whitespace-pre-wrap">${escapeHtml((d.spiritual||{}).warta||'Belum ada warta.')}</p><p class="text-xs text-slate-300 mt-2 whitespace-pre-wrap">${escapeHtml((d.spiritual||{}).partangiangan||'Belum ada informasi partangiangan.')}</p></div></div>`);
+            } else if (role === 'bendahara') {
+                const rows = d.finance || []; const bal = rows.reduce((n,x)=>n+(x.type==='out'?-1:1)*Number(x.amount||0),0);
+                html += panel('Kas Punguan','Bendahara dapat menambah dan menghapus transaksi kas. Data lain tidak dapat diubah.',`<div class="mb-4 rounded-xl bg-emas-500/10 border border-emas-500/30 p-4"><p class="text-xs text-emas-200">Saldo berdasarkan seluruh transaksi</p><p class="text-2xl font-black text-emas-300">${formatRupiah(bal)}</p></div><form onsubmit="bphAddFinance(event)" class="grid sm:grid-cols-2 lg:grid-cols-5 gap-2 mb-5"><input id="bph-fin-date" type="date" required class="p-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><select id="bph-fin-type" class="p-2 rounded-lg bg-[#14161F] border border-white/10 text-white text-xs"><option value="in">Pemasukan</option><option value="out">Pengeluaran</option></select><input id="bph-fin-amount" type="number" min="1" required placeholder="Nominal Rp" class="p-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><input id="bph-fin-desc" required placeholder="Keterangan" class="p-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><button class="p-2 rounded-lg bg-gorga-600 text-white text-xs font-bold">Tambah Transaksi</button></form><div class="space-y-2">${rows.map(x=>`<div class="flex items-center justify-between gap-3 rounded-lg bg-white/[0.03] p-3"><div class="min-w-0"><p class="text-xs text-white font-bold">${escapeHtml(x.description)}</p><p class="text-[11px] text-slate-400">${escapeHtml(x.date)} â€¢ ${x.type==='out'?'Pengeluaran':'Pemasukan'}</p></div><div class="text-right"><b class="text-xs ${x.type==='out'?'text-red-300':'text-emerald-300'}">${formatRupiah(x.amount)}</b><div class="flex justify-end gap-3 mt-1"><button onclick="bphEditItem('finance','${x.id}')" class="text-[10px] text-emas-300">Edit</button><button onclick="bphDeleteItem('finance','${x.id}')" class="text-[10px] text-red-300">Hapus</button></div></div></div>`).join('')||'<p class="text-xs text-slate-400">Belum ada transaksi.</p>'}</div>`);
+            } else if (role === 'humas' || role === 'wakil_humas') {
+                const rows=d.announcements||[];
+                html += panel('Berita & Pengumuman','Seksi Humas dan Wakil Seksi Humas dapat menambah atau menghapus pengumuman. Konten akan tampil pada halaman pengunjung.',`<form onsubmit="bphAddAnnouncement(event)" class="space-y-2 mb-5"><input id="bph-ann-title" required placeholder="Judul pengumuman" class="w-full p-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm"><input id="bph-ann-date" type="date" required class="p-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><textarea id="bph-ann-content" required rows="4" placeholder="Isi berita / pengumuman" class="w-full p-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm"></textarea><button class="px-4 py-2 rounded-lg bg-gorga-600 text-white text-xs font-bold">Terbitkan Pengumuman</button></form><div class="space-y-2">${rows.map(x=>`<div class="rounded-lg bg-white/[0.03] p-3 flex justify-between gap-3"><div><b class="text-sm text-white">${escapeHtml(x.title)}</b><p class="text-[11px] text-slate-400">${escapeHtml(x.date)}</p><p class="text-xs text-slate-300 mt-1">${escapeHtml(x.content)}</p></div><div class="flex flex-col gap-2"><button onclick="bphEditItem('announcements','${x.id}')" class="text-xs text-emas-300">Edit</button><button onclick="bphDeleteItem('announcements','${x.id}')" class="text-xs text-red-300">Hapus</button></div></div>`).join('')||'<p class="text-xs text-slate-400">Belum ada pengumuman.</p>'}</div>`);
+            } else if (role === 'olahraga') {
+                const rows=d.events||[];
+                html += panel('Agenda Kegiatan Olahraga','Seksi Olahraga hanya dapat mengelola agenda berkategori Olahraga.',`<form onsubmit="bphAddSports(event)" class="grid sm:grid-cols-2 gap-2 mb-5"><input id="bph-sport-title" required placeholder="Nama kegiatan olahraga" class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm"><input id="bph-sport-date" type="date" required class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><input id="bph-sport-time" placeholder="Waktu kegiatan" class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><input id="bph-sport-location" placeholder="Lokasi" class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><textarea id="bph-sport-desc" rows="3" placeholder="Keterangan" class="sm:col-span-2 p-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm"></textarea><button class="sm:col-span-2 px-4 py-2 rounded-lg bg-gorga-600 text-white text-xs font-bold">Simpan Agenda Olahraga</button></form><div class="space-y-2">${rows.map(x=>`<div class="rounded-lg bg-white/[0.03] p-3 flex justify-between gap-3"><div><b class="text-sm">${escapeHtml(x.title)}</b><p class="text-[11px] text-slate-400">${escapeHtml(x.date)} â€¢ ${escapeHtml(x.location)}</p></div><div class="flex flex-col gap-2"><button onclick="bphEditItem('sports','${x.id}')" class="text-xs text-emas-300">Edit</button><button onclick="bphDeleteItem('sports','${x.id}')" class="text-xs text-red-300">Hapus</button></div></div>`).join('')||'<p class="text-xs text-slate-400">Belum ada agenda olahraga.</p>'}</div>`);
+            } else if (role === 'rohani') {
+                html += panel('Warta & Partangiangan','Seksi Rohani dapat memperbarui warta dan informasi partangiangan. Setelah disimpan, informasi diterbitkan ke halaman pengunjung.',`<label class="block text-xs text-emas-300 mb-1">Warta Rohani</label><textarea id="bph-spiritual-warta" rows="5" class="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white mb-4" placeholder="Tulis warta rohani...">${escapeHtml((d.spiritual||{}).warta||'')}</textarea><label class="block text-xs text-emas-300 mb-1">Informasi Partangiangan</label><textarea id="bph-spiritual-part" rows="5" class="w-full p-3 rounded-xl bg-white/5 border border-white/10 text-sm text-white" placeholder="Tulis jadwal / informasi partangiangan...">${escapeHtml((d.spiritual||{}).partangiangan||'')}</textarea><button onclick="saveBphSection('spiritual',{warta:document.getElementById('bph-spiritual-warta').value,partangiangan:document.getElementById('bph-spiritual-part').value})" class="mt-4 px-4 py-2 rounded-lg bg-gorga-600 text-white text-xs font-bold">Simpan Warta & Partangiangan</button>`);
+            } else if (role === 'dokumentasi' || role === 'wakil_dokumentasi') {
+                const rows=d.albums||[];
+                html += panel('Dokumentasi & Album Foto','Seksi Dokumentasi dapat menambah dan menghapus item album. Masukkan tautan gambar yang dapat dibuka publik.',`<form onsubmit="bphAddAlbum(event)" class="grid sm:grid-cols-2 gap-2 mb-5"><input id="bph-alb-title" required placeholder="Judul foto" class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm"><input id="bph-alb-date" type="date" required class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><input id="bph-alb-file" type="file" accept="image/jpeg,image/png,image/webp" required class="sm:col-span-2 p-3 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><p class="sm:col-span-2 text-[10px] text-slate-400">Foto akan diunggah ke folder FOTO GALERI pada Google Drive PNTS.</p><input id="bph-alb-caption" placeholder="Keterangan foto" class="sm:col-span-2 p-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm"><button class="sm:col-span-2 px-4 py-2 rounded-lg bg-gorga-600 text-white text-xs font-bold">Tambah ke Album</button></form><div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">${rows.map(x=>`<div class="rounded-xl overflow-hidden bg-white/[0.03] border border-white/10"><img src="${escapeHtml(x.image||'')}" class="w-full h-32 object-cover" onerror="this.style.display='none'"><div class="p-3"><b class="text-xs">${escapeHtml(x.title)}</b><p class="text-[10px] text-slate-400">${escapeHtml(x.date)}</p><div class="flex gap-3 mt-2"><button onclick="bphEditItem('documentation','${x.id}')" class="text-[11px] text-emas-300">Edit</button><button onclick="bphDeleteItem('documentation','${x.id}')" class="text-[11px] text-red-300">Hapus</button></div></div></div>`).join('')||'<p class="text-xs text-slate-400">Belum ada foto.</p>'}</div>`);
+            } else if (role === 'sekretaris') {
+                const members=d.members||[]; const pendingMembers=members.filter(m=>m.verification==='pending');
+                html += panel('Pengelolaan Anggota & Pendaftaran Baru','Sekretaris dapat menambahkan anggota, menyetujui atau menolak pendaftar baru, serta menghapus data anggota bila diperlukan.',`<form onsubmit="bphSecretaryAddMember(event)" class="grid sm:grid-cols-2 gap-2 mb-5"><input name="name" required placeholder="Nama lengkap anggota" class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><input name="marga" placeholder="Marga" class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><input name="whatsapp" placeholder="Nomor WhatsApp" class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><input name="sector" placeholder="Sektor" class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><input name="tubuniBr" placeholder="Tubuni / Boru" class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><input name="huta" placeholder="Huta asal" class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><select name="gender" class="p-3 rounded-lg bg-[#14161F] border border-white/10 text-white text-xs"><option>Laki-laki</option><option>Perempuan</option></select><select name="status" class="p-3 rounded-lg bg-[#14161F] border border-white/10 text-white text-xs"><option>Anggota</option><option>Boru</option><option>Bere</option></select><button class="sm:col-span-2 px-4 py-2 rounded-lg bg-gorga-600 text-white text-xs font-bold">Tambah Anggota</button></form><h3 class="text-sm font-bold text-amber-200 mb-2">Pendaftar menunggu persetujuan (${pendingMembers.length})</h3><div class="space-y-2 mb-4">${pendingMembers.map(m=>`<div class="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3"><b class="text-sm">${escapeHtml(m.name)}</b><p class="text-[11px] text-slate-400">${escapeHtml(m.marga||'')} â€¢ ${escapeHtml(m.sector||'')} â€¢ ${escapeHtml(m.whatsapp||'')}</p><p class="text-xs text-slate-300 mt-1">Alasan: ${escapeHtml(m.reason||'-')}</p><div class="flex gap-2 mt-2"><button onclick="bphSecretaryMemberAction('approve','${m.id}')" class="px-3 py-1.5 rounded bg-emerald-600 text-white text-xs">Setujui</button><button onclick="bphSecretaryMemberAction('reject','${m.id}')" class="px-3 py-1.5 rounded bg-red-600 text-white text-xs">Tolak</button></div></div>`).join('')||'<p class="text-xs text-slate-500">Tidak ada pendaftar baru yang menunggu.</p>'}</div><h3 class="text-sm font-bold text-white mb-2">Daftar Anggota (${members.length})</h3><div class="space-y-2 max-h-96 overflow-y-auto">${members.map(m=>`<div class="flex items-center justify-between gap-3 rounded-lg bg-white/[0.04] p-3"><div><b class="text-xs text-white">${escapeHtml(m.name)}</b><p class="text-[10px] text-slate-400">${escapeHtml(m.marga||'')} â€¢ ${escapeHtml(m.verification||'')}</p></div><button onclick="bphSecretaryMemberAction('delete','${m.id}')" class="text-xs text-red-300">Hapus</button></div>`).join('')}</div>`);
+                const rows=d.secretariat||[];
+                html += panel('Administrasi Kesekretariatan','Sekretaris dapat mencatat surat, notulen, dan dokumen organisasi. Ringkasan yang dibuat diterbitkan sebagai informasi di halaman pengunjung.',`<form onsubmit="bphAddSecretariat(event)" class="grid sm:grid-cols-2 gap-2 mb-5"><input id="bph-sec-title" required placeholder="Judul surat / notulen" class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm"><input id="bph-sec-date" type="date" required class="p-3 rounded-lg bg-white/5 border border-white/10 text-white text-xs"><select id="bph-sec-type" class="p-3 rounded-lg bg-[#14161F] border border-white/10 text-white text-xs"><option>Surat</option><option>Notulen Rapat</option><option>Administrasi</option><option>Informasi Organisasi</option></select><textarea id="bph-sec-notes" rows="3" placeholder="Ringkasan / keterangan" class="sm:col-span-2 p-3 rounded-lg bg-white/5 border border-white/10 text-white text-sm"></textarea><button class="sm:col-span-2 px-4 py-2 rounded-lg bg-gorga-600 text-white text-xs font-bold">Simpan Catatan Administrasi</button></form><div class="space-y-2">${rows.map(x=>`<div class="rounded-lg bg-white/[0.03] p-3 flex justify-between gap-3"><div><b class="text-sm">${escapeHtml(x.title)}</b><p class="text-[11px] text-slate-400">${escapeHtml(x.type)} â€¢ ${escapeHtml(x.date)}</p><p class="text-xs text-slate-300">${escapeHtml(x.notes)}</p></div><div class="flex flex-col gap-2"><button onclick="bphEditItem('secretariat','${x.id}')" class="text-xs text-emas-300">Edit</button><button onclick="bphDeleteItem('secretariat','${x.id}')" class="text-xs text-red-300">Hapus</button></div></div>`).join('')||'<p class="text-xs text-slate-400">Belum ada catatan administrasi.</p>'}</div>`);
+            }
+            main.innerHTML = html; refreshIcons();
+        }
+
+        function bphEditItem(section, id) {
+            const key = section === 'sports' ? 'events' : section === 'documentation' ? 'albums' : section;
+            const rows = Array.isArray(pntsBphData[key]) ? [...pntsBphData[key]] : [];
+            const item = rows.find(x => x.id === id); if (!item) return;
+            const ask = (label, value) => { const v = window.prompt(label, value || ''); return v === null ? null : v.trim(); };
+            if (section === 'finance') {
+                const amount=ask('Nominal transaksi (angka rupiah):',String(item.amount)); if(amount===null)return;
+                const desc=ask('Keterangan transaksi:',item.description); if(desc===null)return;
+                const type=ask('Jenis transaksi: ketik in untuk pemasukan atau out untuk pengeluaran:',item.type); if(type===null)return;
+                item.amount=Number(amount); item.description=desc; item.type=type.toLowerCase()==='out'?'out':'in';
+            } else if (section === 'announcements') {
+                const title=ask('Judul pengumuman:',item.title); if(title===null)return;
+                const content=ask('Isi pengumuman:',item.content); if(content===null)return;
+                const date=ask('Tanggal (YYYY-MM-DD):',item.date); if(date===null)return;
+                Object.assign(item,{title,content,date});
+            } else if (section === 'sports') {
+                const title=ask('Nama kegiatan:',item.title); if(title===null)return;
+                const date=ask('Tanggal (YYYY-MM-DD):',item.date); if(date===null)return;
+                const location=ask('Lokasi:',item.location); if(location===null)return;
+                const description=ask('Keterangan:',item.description); if(description===null)return;
+                Object.assign(item,{title,date,location,description,category:'Olahraga'});
+            } else if (section === 'documentation') {
+                const title=ask('Judul dokumentasi:',item.title); if(title===null)return;
+                const image=ask('URL foto:',item.image); if(image===null)return;
+                const caption=ask('Keterangan foto:',item.caption); if(caption===null)return;
+                Object.assign(item,{title,image,caption});
+            } else if (section === 'secretariat') {
+                const title=ask('Judul dokumen:',item.title); if(title===null)return;
+                const type=ask('Jenis dokumen:',item.type); if(type===null)return;
+                const notes=ask('Ringkasan:',item.notes); if(notes===null)return;
+                Object.assign(item,{title,type,notes});
+            }
+            saveBphSection(section, rows);
+        }
+
+        async function bphAddFinance(e) { e.preventDefault(); const a=[...(pntsBphData.finance||[])]; a.unshift({id:generateId('bphf'),date:document.getElementById('bph-fin-date').value,type:document.getElementById('bph-fin-type').value,amount:Number(document.getElementById('bph-fin-amount').value),description:document.getElementById('bph-fin-desc').value.trim()}); await saveBphSection('finance',a); }
+        async function bphAddAnnouncement(e) { e.preventDefault(); const a=[...(pntsBphData.announcements||[])]; a.unshift({id:generateId('bpha'),title:document.getElementById('bph-ann-title').value.trim(),date:document.getElementById('bph-ann-date').value,pinned:false,content:document.getElementById('bph-ann-content').value.trim()}); await saveBphSection('announcements',a); }
+        async function bphAddSports(e) { e.preventDefault(); const a=[...(pntsBphData.events||[])]; a.unshift({id:generateId('bphs'),title:document.getElementById('bph-sport-title').value.trim(),category:'Olahraga',date:document.getElementById('bph-sport-date').value,time:document.getElementById('bph-sport-time').value.trim(),location:document.getElementById('bph-sport-location').value.trim(),description:document.getElementById('bph-sport-desc').value.trim()}); await saveBphSection('sports',a); }
+        async function bphAddAlbum(e) { e.preventDefault(); const file=document.getElementById('bph-alb-file').files[0]; if(!file){showToast('Pilih foto terlebih dahulu.','error');return;} try { const dataUrl=await compressImageFile(file,900,680,0.8); const comma=dataUrl.indexOf(','); const mime=(dataUrl.match(/^data:([^;]+);base64,/i)||[])[1]||'image/jpeg'; const up=await pntsBphApi('/api/bph/upload',{method:'POST',body:JSON.stringify({base64:dataUrl.slice(comma+1),mimeType:mime,name:document.getElementById('bph-alb-title').value.trim()||'dokumentasi'})}); if(!up.url) throw new Error('URL foto tidak diterima dari server.'); const a=[...(pntsBphData.albums||[])]; a.unshift({id:generateId('bphalb'),title:document.getElementById('bph-alb-title').value.trim(),category:'Dokumentasi',date:document.getElementById('bph-alb-date').value,caption:document.getElementById('bph-alb-caption').value.trim(),image:up.url}); await saveBphSection('documentation',a); } catch(err){showToast('Gagal mengunggah foto: '+err.message,'error');} }
+        async function bphAddSecretariat(e) { e.preventDefault(); const a=[...(pntsBphData.secretariat||[])]; a.unshift({id:generateId('bphsec'),title:document.getElementById('bph-sec-title').value.trim(),date:document.getElementById('bph-sec-date').value,type:document.getElementById('bph-sec-type').value,notes:document.getElementById('bph-sec-notes').value.trim()}); await saveBphSection('secretariat',a); }
+
+        async function renderAdminTabBphReports(container) {
+            container.innerHTML = `<div class="glass-panel rounded-2xl p-6"><h3 class="text-lg font-bold text-white">Pemantauan Laporan Kinerja BPH</h3><p class="text-xs text-slate-400 mt-1">Admin dapat memantau laporan Ketua/Wakil Ketua, tanggapan pengurus, dan pembaruan perbaikan.</p><div id="admin-bph-reports-list" class="mt-5 text-sm text-slate-400">Memuat laporan...</div></div>`;
+            try {
+                const r=await pntsApi('/api/admin/bph-reports',{method:'GET'}), rows=r.reports||[];
+                const statusLabel=x=>String(x||'').replaceAll('_',' ');
+                const el=document.getElementById('admin-bph-reports-list'); if(!el)return;
+                el.innerHTML=rows.length?`<div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead><tr class="text-slate-400 border-b border-white/10"><th class="p-2">Tanggal</th><th class="p-2">Pelapor</th><th class="p-2">Pengurus</th><th class="p-2">Bagian / Kontrol</th><th class="p-2">Status</th><th class="p-2">Tanggapan / Pembaruan</th></tr></thead><tbody>${rows.slice().reverse().map(x=>`<tr class="border-b border-white/5 align-top"><td class="p-2 text-slate-400">${escapeHtml((x.createdAt||'').slice(0,16).replace('T',' '))}</td><td class="p-2">${escapeHtml(x.reporterName)}</td><td class="p-2">${escapeHtml(x.targetName)}<div class="text-[10px] text-slate-500">${escapeHtml(x.targetRole)}</div></td><td class="p-2"><b>${escapeHtml(x.section)}</b><div class="text-slate-400">${escapeHtml(x.control)}</div><div class="text-slate-300 mt-1">${escapeHtml(x.details)}</div></td><td class="p-2"><span class="px-2 py-1 rounded bg-emas-500/10 text-emas-300">${escapeHtml(statusLabel(x.status))}</span></td><td class="p-2 text-slate-300">${escapeHtml(x.answer||'Belum ada tanggapan')}</td></tr>`).join('')}</tbody></table></div>`:'Belum ada laporan kinerja BPH.';
+            } catch(err) { const el=document.getElementById('admin-bph-reports-list'); if(el)el.innerHTML=`<span class="text-red-300">Gagal memuat laporan: ${escapeHtml(err.message)}</span>`; }
         }
 
         // --- ADMIN TAB 0: DASHBOARD RINGKASAN ---
@@ -3222,7 +3543,7 @@
                                     <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</p>
-                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} • ${escapeHtml(m.status)} • ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.status)} â€¢ ${escapeHtml(m.sector)}</p>
                                         </div>
                                         <div class="flex items-center gap-1.5 shrink-0">
                                             <button onclick="approveMember('${m.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition">Setujui</button>
@@ -3527,10 +3848,10 @@
                                                 <h4 class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</h4>
                                                 <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase shrink-0 ${getStatusBadgeClass(m.status)}">${escapeHtml(m.status)}</span>
                                             </div>
-                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} • ${escapeHtml(m.gender || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} • Huta: ${escapeHtml(m.huta || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} • Sektor: ${escapeHtml(m.sector)}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} • Daftar: ${formatDateIndo(m.joinedAt)}</p>
+                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.gender || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} â€¢ Huta: ${escapeHtml(m.huta || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} â€¢ Sektor: ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} â€¢ Daftar: ${formatDateIndo(m.joinedAt)}</p>
                                             ${m.reason ? `<p class="text-[11px] text-slate-300 mt-1.5 italic bg-white/5 p-2 rounded-lg">"${escapeHtml(m.reason)}"</p>` : ''}
                                         </div>
                                     </div>
@@ -3602,8 +3923,8 @@
                                                 ${m.photo ? `<img src="${m.photo}" class="w-9 h-11 rounded-lg object-cover border border-white/15 shrink-0">` : ''}
                                                 <div>
                                                     <p class="font-bold text-white">${escapeHtml(m.name)}</p>
-                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? '• Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
-                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} • ${escapeHtml(m.activity || '-')}</p>` : ''}
+                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? 'â€¢ Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
+                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} â€¢ ${escapeHtml(m.activity || '-')}</p>` : ''}
                                                 </div>
                                             </div>
                                         </td>
@@ -3771,7 +4092,7 @@
                                 </div>
                                 <h4 class="text-base font-bold text-white">${escapeHtml(ev.title)}</h4>
                                 <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">${escapeHtml(ev.description)}</p>
-                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} • <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
+                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} â€¢ <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
                             </div>
                             <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
                                 <button onclick="openEventModal('${ev.id}')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-emas-500/20 text-xs font-semibold text-slate-200 hover:text-emas-300 transition">Edit</button>
@@ -4185,7 +4506,7 @@
                                         <div class="min-w-0">
                                             <span class="text-[11px] font-bold uppercase text-emas-400">${escapeHtml(p.role)}</span>
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(p.name)}</p>
-                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? '• ' + escapeHtml(p.period) : ''}</p>
+                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? 'â€¢ ' + escapeHtml(p.period) : ''}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1 shrink-0">
@@ -4498,7 +4819,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 19px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} • WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} â€¢ WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
