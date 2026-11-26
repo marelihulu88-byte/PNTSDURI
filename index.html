@@ -994,12 +994,19 @@
 
         async function loadAdminDatabaseOrMigrate() {
             let result;
+            let usedPublicFallback = false;
             try {
                 // Prioritaskan endpoint admin penuh (/api/admin/data) agar data kas, pending, & log terbaca lengkap
                 result = await pntsApi('/api/admin/data', { method: 'GET' });
             } catch (adminRouteErr) {
-                // Fallback otomatis ke /api/data jika Worker belum diperbarui ke rute baru
+                const errMsg = String(adminRouteErr && adminRouteErr.message || '');
+                // Jika error karena sesi/token tidak valid, jangan fallback ke data publik
+                if (/401|403|sesi|ditolak|tidak valid/i.test(errMsg)) {
+                    throw adminRouteErr;
+                }
+                // Fallback hanya jika Worker lama belum memiliki rute /api/admin/data (404)
                 result = await pntsApi('/api/data', { method: 'GET' });
+                usedPublicFallback = true;
             }
             const serverData = result.data || {};
             if (Object.keys(serverData).length === 0) {
@@ -1009,6 +1016,20 @@
                 appData = mergeWithDefaultData(cloudData);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
                 showToast('Data lama berhasil dipindahkan ke database PNTS DURI.', 'success');
+            } else if (usedPublicFallback) {
+                // Pertahankan data privat lokal (kas, pendaftar pending, riwayat pengunjung) agar tidak hilang
+                const preservedFinance = Array.isArray(appData.finance) ? appData.finance : DEFAULT_DATA.finance;
+                const preservedLogs = Array.isArray(appData.visitorLogs) ? appData.visitorLogs : DEFAULT_DATA.visitorLogs;
+                const localPending = (appData.members || []).filter(m => m.verification === 'pending');
+                const mergedMembers = [...localPending, ...(serverData.members || [])];
+                appData = mergeWithDefaultData({
+                    ...DEFAULT_DATA,
+                    ...serverData,
+                    members: mergedMembers,
+                    finance: preservedFinance,
+                    visitorLogs: preservedLogs
+                });
+                saveData(true);
             } else {
                 appData = mergeWithDefaultData({ ...DEFAULT_DATA, ...serverData });
                 saveData(true);
@@ -2148,7 +2169,7 @@
                         </div>
 
                         <div class="mt-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-                            <p>&copy; ${new Date().getFullYear()} ${escapeHtml(s.orgName)} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${escapeHtml(s.orgSubtitle)}. Horas!</p>
+                            <p>&copy; ${new Date().getFullYear()} ${escapeHtml(s.orgName)} &mdash; ${escapeHtml(s.orgSubtitle)}. Horas!</p>
                             <p>Togatorop &bull; Sianturi &bull; Siburian &bull; Boru &bull; Bere</p>
                         </div>
                     </div>
@@ -2165,6 +2186,60 @@
             initMotionEngine();
         }
 
+
+
+        function handlePublicAlbumFilter(cat) {
+            publicAlbumFilter = cat;
+            renderPublicPortal();
+        }
+
+        function renderPublicAlbumGrid() {
+            const grid = document.getElementById('public-album-grid');
+            if (!grid) return;
+
+            const list = [...(appData.albums || [])]
+                .filter(alb => publicAlbumFilter === 'Semua' || alb.category === publicAlbumFilter)
+                .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+            if (list.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full glass-panel rounded-2xl p-10 text-center text-slate-400 text-sm">
+                        Belum ada dokumentasi foto untuk kategori "${escapeHtml(publicAlbumFilter)}".
+                    </div>`;
+                return;
+            }
+
+            grid.innerHTML = list.map(alb => `
+                <article onclick="openAlbumLightbox('${alb.id}')"
+                    class="gsap-card group cursor-pointer glass-panel rounded-2xl overflow-hidden flex flex-col justify-between glass-panel-hover transition">
+                    <div>
+                        <div class="relative aspect-[4/3] bg-black/50 overflow-hidden">
+                            <img src="${alb.image}" alt="${escapeHtml(alb.title)}"
+                                onerror="this.src='https://placehold.co/800x600/18181B/F59E0B?text=Foto+Kegiatan'"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-obsidian/85 via-transparent to-transparent opacity-80"></div>
+                            <span class="absolute top-3 left-3 px-3 py-1 rounded-full bg-obsidian/80 backdrop-blur-md border border-emas-500/40 text-emas-300 text-[11px] font-bold">
+                                ${escapeHtml(alb.category)}
+                            </span>
+                            <span class="absolute bottom-3 right-3 w-9 h-9 rounded-full bg-gorga-600/90 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-lg">
+                                <i data-lucide="maximize-2" class="w-4 h-4"></i>
+                            </span>
+                        </div>
+                        <div class="p-5">
+                            <p class="text-xs text-slate-400 flex items-center gap-1.5 mb-1">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-emas-400"></i>
+                                ${formatDateIndo(alb.date)}
+                            </p>
+                            <h3 class="text-base font-bold text-white group-hover:text-emas-300 transition line-clamp-1">${escapeHtml(alb.title)}</h3>
+                            ${alb.caption ? `<p class="text-xs text-slate-300 mt-1.5 leading-relaxed line-clamp-2">${escapeHtml(alb.caption)}</p>` : ''}
+                        </div>
+                    </div>
+                </article>
+            `).join('');
+
+            refreshIcons();
+            animateDynamicCards('#public-album-grid .gsap-card');
+        }
 
         function openAlbumLightbox(id) {
             const alb = (appData.albums || []).find(a => a.id === id);
@@ -2361,17 +2436,17 @@
                 `*HORAS! PENDAFTARAN ANGGOTA BARU*`,
                 `_${appData.settings.orgName}_`,
                 ``,
-                `ðŸ‘¤ *Nama Lengkap:* ${newMember.name}`,
-                `ðŸ‘©ðŸ»â€ðŸ¤â€ðŸ‘¨ðŸ½ *Jenis Kelamin:* ${newMember.gender}`,
-                `ðŸ’• *Status:* ${newMember.status}`,
-                `ðŸ”— *Marga / Sub-Marga:* ${newMember.marga}`,
-                `â™› *Tubuni Br.:* ${newMember.tubuniBr}`,
-                `ðŸ¡ *Asal (Huta):* ${newMember.huta}`,
-                `ðŸ•‘ *Aktivitas:* ${newMember.activity}`,
-                `ðŸ—ºï¸ *Sektor Domisili:* ${newMember.sector}`,
-                `âœ† *No. WhatsApp:* ${newMember.whatsapp}`,
-                `ðŸ¤” *Alasan Bergabung:* ${newMember.reason}`,
-                `ðŸ—“ï¸ *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
+                `👤 *Nama Lengkap:* ${newMember.name}`,
+                `👩🏻‍🤝‍👨🏽 *Jenis Kelamin:* ${newMember.gender}`,
+                `💕 *Status:* ${newMember.status}`,
+                `🔗 *Marga / Sub-Marga:* ${newMember.marga}`,
+                `♛ *Tubuni Br.:* ${newMember.tubuniBr}`,
+                `🏡 *Asal (Huta):* ${newMember.huta}`,
+                `🕑 *Aktivitas:* ${newMember.activity}`,
+                `🗺️ *Sektor Domisili:* ${newMember.sector}`,
+                `✆ *No. WhatsApp:* ${newMember.whatsapp}`,
+                `🤔 *Alasan Bergabung:* ${newMember.reason}`,
+                `🗓️ *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
                 ``,
                 `Mohon verifikasi di Portal Admin. Mauliate!`
             ].join('\n');
@@ -2414,7 +2489,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} ðŸ“² WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} 📲 WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
@@ -2501,7 +2576,7 @@
                         <p><strong class="text-slate-400">Marga/Status:</strong> ${escapeHtml(member.marga)} (${escapeHtml(member.status)})</p>
                         <p><strong class="text-slate-400">Tubuni Br.:</strong> ${escapeHtml(member.tubuniBr)}</p>
                         <p><strong class="text-slate-400">Asal (Huta):</strong> ${escapeHtml(member.huta)}</p>
-                        <p><strong class="text-slate-400">Aktivitas:</strong> ${escapeHtml(member.activity)}  ${escapeHtml(member.gender)}</p>
+                        <p><strong class="text-slate-400">Aktivitas:</strong> ${escapeHtml(member.activity)} &bull; ${escapeHtml(member.gender)}</p>
                         <p><strong class="text-slate-400">Sektor:</strong> ${escapeHtml(member.sector)}</p>
                     </div>
                 </div>
@@ -3066,7 +3141,7 @@
                                     <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</p>
-                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.status)} â€¢ ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} • ${escapeHtml(m.status)} • ${escapeHtml(m.sector)}</p>
                                         </div>
                                         <div class="flex items-center gap-1.5 shrink-0">
                                             <button onclick="approveMember('${m.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition">Setujui</button>
@@ -3371,10 +3446,10 @@
                                                 <h4 class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</h4>
                                                 <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase shrink-0 ${getStatusBadgeClass(m.status)}">${escapeHtml(m.status)}</span>
                                             </div>
-                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.gender || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} â€¢ Huta: ${escapeHtml(m.huta || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} â€¢ Sektor: ${escapeHtml(m.sector)}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} â€¢ Daftar: ${formatDateIndo(m.joinedAt)}</p>
+                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} • ${escapeHtml(m.gender || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} • Huta: ${escapeHtml(m.huta || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} • Sektor: ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} • Daftar: ${formatDateIndo(m.joinedAt)}</p>
                                             ${m.reason ? `<p class="text-[11px] text-slate-300 mt-1.5 italic bg-white/5 p-2 rounded-lg">"${escapeHtml(m.reason)}"</p>` : ''}
                                         </div>
                                     </div>
@@ -3446,8 +3521,8 @@
                                                 ${m.photo ? `<img src="${m.photo}" class="w-9 h-11 rounded-lg object-cover border border-white/15 shrink-0">` : ''}
                                                 <div>
                                                     <p class="font-bold text-white">${escapeHtml(m.name)}</p>
-                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? 'â€¢ Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
-                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} â€¢ ${escapeHtml(m.activity || '-')}</p>` : ''}
+                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? '• Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
+                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} • ${escapeHtml(m.activity || '-')}</p>` : ''}
                                                 </div>
                                             </div>
                                         </td>
@@ -3615,7 +3690,7 @@
                                 </div>
                                 <h4 class="text-base font-bold text-white">${escapeHtml(ev.title)}</h4>
                                 <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">${escapeHtml(ev.description)}</p>
-                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} â€¢ <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
+                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} • <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
                             </div>
                             <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
                                 <button onclick="openEventModal('${ev.id}')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-emas-500/20 text-xs font-semibold text-slate-200 hover:text-emas-300 transition">Edit</button>
@@ -4029,7 +4104,7 @@
                                         <div class="min-w-0">
                                             <span class="text-[11px] font-bold uppercase text-emas-400">${escapeHtml(p.role)}</span>
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(p.name)}</p>
-                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? 'â€¢ ' + escapeHtml(p.period) : ''}</p>
+                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? '• ' + escapeHtml(p.period) : ''}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1 shrink-0">
@@ -4342,7 +4417,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 19px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} â€¢ WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} • WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
@@ -4732,28 +4807,31 @@
                     </form>
 
                     <div class="grid md:grid-cols-2 gap-6">
-                        <!-- Change Admin Password -->
-                        <form onsubmit="handleChangePassword(event)" class="glass-panel rounded-2xl p-6 space-y-4">
-                            <h3 class="text-base font-bold text-white flex items-center gap-2 border-b border-white/10 pb-3">
-                                <i data-lucide="key" class="w-5 h-5 text-emas-400"></i>
-                                Ganti Password Admin
-                            </h3>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase text-slate-300 mb-1.5">Password Lama</label>
-                                <input type="password" id="pw-old" required class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-emas-500">
+                        <!-- Admin Security & Cloudflare Secrets Info -->
+                        <div class="glass-panel rounded-2xl p-6 flex flex-col justify-between space-y-4">
+                            <div class="space-y-4">
+                                <h3 class="text-base font-bold text-white flex items-center gap-2 border-b border-white/10 pb-3">
+                                    <i data-lucide="shield-check" class="w-5 h-5 text-emas-400"></i>
+                                    Keamanan Akun &amp; Sesi Admin
+                                </h3>
+                                <div class="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-200 flex items-center gap-2.5">
+                                    <i data-lucide="lock" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+                                    <span>Otentikasi dilindungi token terenkripsi HMAC-SHA256 (berlaku 12 jam per sesi).</span>
+                                </div>
+                                <p class="text-sm text-slate-300 leading-relaxed">
+                                    Demi keamanan tingkat server, kredensial login Admin tidak disimpan di browser, melainkan dikelola melalui <strong>Cloudflare Worker Secrets</strong>:
+                                </p>
+                                <ul class="text-xs text-slate-300 space-y-1.5 bg-white/[0.03] border border-white/10 rounded-xl p-3.5">
+                                    <li>1. Buka Dashboard <strong>Cloudflare Workers &amp; Pages</strong></li>
+                                    <li>2. Pilih Worker API PNTS &rarr; <strong>Settings &rarr; Variables and Secrets</strong></li>
+                                    <li>3. Ubah nilai <code class="text-emas-300">ADMIN_USERNAME</code> atau <code class="text-emas-300">ADMIN_PASSWORD</code></li>
+                                </ul>
                             </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase text-slate-300 mb-1.5">Password Baru (Min. 6 karakter)</label>
-                                <input type="password" id="pw-new" required minlength="6" class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-emas-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold uppercase text-slate-300 mb-1.5">Konfirmasi Password Baru</label>
-                                <input type="password" id="pw-confirm" required minlength="6" class="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-sm text-white focus:outline-none focus:border-emas-500">
-                            </div>
-                            <button type="submit" class="w-full py-2.5 rounded-xl bg-gorga-600 hover:bg-gorga-500 text-white text-sm font-bold transition">
-                                Perbarui Password Admin
+                            <button type="button" onclick="handleAdminLogout()" class="w-full py-2.5 rounded-xl bg-white/5 hover:bg-red-600/20 border border-white/10 hover:border-red-500/40 text-slate-200 hover:text-red-300 text-sm font-bold transition flex items-center justify-center gap-2">
+                                <i data-lucide="log-out" class="w-4 h-4"></i>
+                                <span>Akhiri Sesi Admin Sekarang</span>
                             </button>
-                        </form>
+                        </div>
 
                         <!-- Backup & Reset Data -->
                         <div class="glass-panel rounded-2xl p-6 flex flex-col justify-between space-y-6">
