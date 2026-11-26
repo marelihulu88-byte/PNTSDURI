@@ -279,7 +279,18 @@
                 margin: 0 !important;
             }
         }
-    </style>
+    
+        /* PNTS DURI: animasi loading pengunjung dan maintenance */
+        @keyframes pnts-orbit { to { transform: rotate(360deg); } }
+        @keyframes pnts-pulse { 0%,100% { transform: scale(.94); opacity:.65 } 50% { transform:scale(1.06); opacity:1 } }
+        @keyframes pnts-float { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-9px) } }
+        @keyframes pnts-shimmer { 0% { background-position:-200% 0 } 100% { background-position:200% 0 } }
+        .pnts-maintenance-orbit { animation:pnts-orbit 18s linear infinite; }
+        .pnts-maintenance-pulse { animation:pnts-pulse 2.8s ease-in-out infinite; }
+        .pnts-maintenance-float { animation:pnts-float 3.5s ease-in-out infinite; }
+        .pnts-maintenance-progress { background:linear-gradient(90deg,#991b1b,#f59e0b,#fef3c7,#f59e0b,#991b1b); background-size:200% 100%; animation:pnts-shimmer 3s linear infinite; }
+        @media (prefers-reduced-motion: reduce) { .pnts-maintenance-orbit,.pnts-maintenance-pulse,.pnts-maintenance-float,.pnts-maintenance-progress { animation:none !important; } }
+</style>
 </head>
 <body class="min-h-screen bg-obsidian text-slate-100 antialiased selection:bg-gorga-600 selection:text-white">
 
@@ -615,6 +626,13 @@
                 whatsapp: '+62 812-6450-8899',
                 email: 'sekretariat@napososimatupang.org',
                 customLogo: '',
+                // Konten Profil, Visi, dan 10 Misi dapat diedit dari Portal Admin.
+                profileTitle: 'Tiga Marga Toga Simatupang',
+                profileDescription: 'Menyatukan generasi muda keturunan Togatorop, Sianturi, dan Siburian bersama seluruh Boru dan Bere dalam semangat Dalihan Na Tolu.',
+                visionTitle: 'Visi Punguan',
+                visionDescription: 'Menjadi organisasi kepemudaan Batak Toba yang solid, berkarakter, peduli dalam suka dan duka (Marsiurupan), serta melestarikan adat dan iman.',
+                missionTitle: 'Misi Punguan',
+                missions: Array(10).fill(''),
                 // Feature Toggles (Full Control over Public Portal)
                 maintenanceMode: false,
                 showTicker: true,
@@ -829,7 +847,10 @@
                     ...mergedSettings,
                     extraPhones: Array.isArray(mergedSettings.extraPhones)
                         ? mergedSettings.extraPhones
-                        : JSON.parse(JSON.stringify(DEFAULT_DATA.settings.extraPhones))
+                        : JSON.parse(JSON.stringify(DEFAULT_DATA.settings.extraPhones)),
+                    missions: Array.isArray(mergedSettings.missions)
+                        ? [...mergedSettings.missions, ...Array(Math.max(0, 10 - mergedSettings.missions.length)).fill('')].slice(0, 10)
+                        : Array(10).fill('')
                 },
                 adminAuth: { ...DEFAULT_DATA.adminAuth, ...(parsed.adminAuth || {}) },
                 reviews: Array.isArray(parsed.reviews) ? parsed.reviews : JSON.parse(JSON.stringify(DEFAULT_DATA.reviews)),
@@ -1442,8 +1463,11 @@
                         <div class="relative z-10 max-w-xl w-full glass-panel rounded-3xl overflow-hidden shadow-2xl border border-emas-500/30">
                             <div class="ulos-strip"></div>
                             <div class="p-8 sm:p-12">
-                                <div class="w-20 h-20 mx-auto rounded-2xl bg-emas-500/15 border border-emas-500/40 flex items-center justify-center mb-6">
-                                    <i data-lucide="wrench" class="w-10 h-10 text-emas-400"></i>
+                                <div class="relative w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                                    <div class="absolute inset-0 rounded-full border-2 border-dashed border-emas-500/50 pnts-maintenance-orbit"></div>
+                                    <div class="absolute inset-3 rounded-2xl bg-emas-500/15 border border-emas-500/40 pnts-maintenance-pulse"></div>
+                                    <i data-lucide="wrench" class="relative z-10 w-10 h-10 text-emas-300 pnts-maintenance-float"></i>
+                                    <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500 animate-ping"></span>
                                 </div>
                                 <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gorga-600/20 border border-gorga-600/40 text-red-300 text-xs font-bold uppercase tracking-wider mb-4">
                                     Sedang Dalam Pemeliharaan
@@ -1452,6 +1476,10 @@
                                 <p class="text-sm font-semibold text-emas-400 mt-1">${escapeHtml(s.orgSubtitle)}</p>
                                 <div class="my-6">${getGorgaDividerSVG()}</div>
                                 <p class="text-slate-300 leading-relaxed text-sm sm:text-base">${escapeHtml(s.maintenanceMessage)}</p>
+                                <div class="mt-7 max-w-xs mx-auto">
+                                    <div class="h-1.5 rounded-full bg-white/10 overflow-hidden"><div class="h-full w-2/3 rounded-full pnts-maintenance-progress"></div></div>
+                                    <div class="mt-2 flex items-center justify-center gap-2 text-[11px] text-slate-500"><span class="w-1.5 h-1.5 rounded-full bg-emas-400 animate-pulse"></span> Mempersiapkan pelayanan yang lebih baik</div>
+                                </div>
 
                                 <div class="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
                                     <div class="flex items-center gap-2">
@@ -1665,28 +1693,24 @@
                             <div class="w-11 h-11 rounded-xl bg-gorga-600/20 border border-gorga-600/40 flex items-center justify-center mb-4">
                                 <i data-lucide="compass" class="w-5 h-5 text-red-400"></i>
                             </div>
-                            <h3 class="text-lg font-bold text-white mb-2">Tiga Marga Toga Simatupang</h3>
-                            <p class="text-sm text-slate-300 leading-relaxed">
-                                Menyatukan generasi muda keturunan <strong class="text-white">Togatorop, Sianturi, dan Siburian</strong> bersama seluruh Boru dan Bere dalam semangat Dalihan Na Tolu.
-                            </p>
+                            <h3 class="text-lg font-bold text-white mb-2">${escapeHtml(s.profileTitle || 'Tiga Marga Toga Simatupang')}</h3>
+                            <p class="text-sm text-slate-300 leading-relaxed">${escapeHtml(s.profileDescription || '')}</p>
                         </div>
                         <div class="gsap-card glass-panel rounded-2xl p-6 glass-panel-hover transition">
                             <div class="w-11 h-11 rounded-xl bg-emas-500/20 border border-emas-500/40 flex items-center justify-center mb-4">
                                 <i data-lucide="heart-handshake" class="w-5 h-5 text-emas-400"></i>
                             </div>
-                            <h3 class="text-lg font-bold text-white mb-2">Visi Punguan</h3>
-                            <p class="text-sm text-slate-300 leading-relaxed">
-                                Menjadi organisasi kepemudaan Batak Toba yang solid, berkarakter, peduli dalam suka dan duka (<em>Marsiurupan</em>), serta melestarikan adat dan iman.
-                            </p>
+                            <h3 class="text-lg font-bold text-white mb-2">${escapeHtml(s.visionTitle || 'Visi Punguan')}</h3>
+                            <p class="text-sm text-slate-300 leading-relaxed">${escapeHtml(s.visionDescription || '')}</p>
                         </div>
                         <div class="gsap-card glass-panel rounded-2xl p-6 glass-panel-hover transition">
                             <div class="w-11 h-11 rounded-xl bg-sky-500/20 border border-sky-500/40 flex items-center justify-center mb-4">
                                 <i data-lucide="sparkles" class="w-5 h-5 text-sky-400"></i>
                             </div>
-                            <h3 class="text-lg font-bold text-white mb-2">Misi Utama</h3>
-                            <p class="text-sm text-slate-300 leading-relaxed">
-                                Menyelenggarakan Partangiangan rutin, mempererat silaturahmi Naposo lintas sektor, mengelola kas secara transparan, dan mendukung pengembangan karier anggota.
-                            </p>
+                            <h3 class="text-lg font-bold text-white mb-2">${escapeHtml(s.missionTitle || 'Misi Punguan')}</h3>
+                            ${(s.missions || []).filter(m => String(m || '').trim()).length
+                                ? `<ol class="list-decimal pl-5 space-y-2 text-sm text-slate-300 leading-relaxed">${(s.missions || []).filter(m => String(m || '').trim()).map(m => `<li>${escapeHtml(m)}</li>`).join('')}</ol>`
+                                : `<p class="text-sm text-slate-400 leading-relaxed">Misi Punguan akan ditampilkan di sini setelah diperbarui oleh admin.</p>`}
                         </div>
                     </div>
 
@@ -2436,17 +2460,17 @@
                 `*HORAS! PENDAFTARAN ANGGOTA BARU*`,
                 `_${appData.settings.orgName}_`,
                 ``,
-                `• *Nama Lengkap:* ${newMember.name}`,
-                `• *Jenis Kelamin:* ${newMember.gender}`,
-                `‪‪•‬ *Status:* ${newMember.status}`,
-                `• *Marga / Sub-Marga:* ${newMember.marga}`,
-                `• *Tubuni Br.:* ${newMember.tubuniBr}`,
-                `• *Asal (Huta):* ${newMember.huta}`,
-                `• *Aktivitas:* ${newMember.activity}`,
-                `• *Sektor Domisili:* ${newMember.sector}`,
-                `✆ *No. WhatsApp:* ${newMember.whatsapp}`,
-                `• *Alasan Bergabung:* ${newMember.reason}`,
-                `• *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
+                `â€¢ *Nama Lengkap:* ${newMember.name}`,
+                `â€¢ *Jenis Kelamin:* ${newMember.gender}`,
+                `â€ªâ€ªâ€¢â€¬ *Status:* ${newMember.status}`,
+                `â€¢ *Marga / Sub-Marga:* ${newMember.marga}`,
+                `â€¢ *Tubuni Br.:* ${newMember.tubuniBr}`,
+                `â€¢ *Asal (Huta):* ${newMember.huta}`,
+                `â€¢ *Aktivitas:* ${newMember.activity}`,
+                `â€¢ *Sektor Domisili:* ${newMember.sector}`,
+                `âœ† *No. WhatsApp:* ${newMember.whatsapp}`,
+                `â€¢ *Alasan Bergabung:* ${newMember.reason}`,
+                `â€¢ *Tanggal Daftar:* ${formatDateIndo(newMember.joinedAt)}`,
                 ``,
                 `Mohon verifikasi di Portal Admin. Mauliate!`
             ].join('\n');
@@ -2489,7 +2513,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} • WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} â€¢ WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
@@ -3025,6 +3049,7 @@
                 { id: 'bph_finance', label: 'Pengurus BPH & Kas', icon: 'wallet' },
                 { id: 'reviews', label: 'Kontrol Ulasan', icon: 'star', badge: pendingReviewCount },
                 { id: 'visitors', label: 'Riwayat Pengunjung', icon: 'activity' },
+                { id: 'profile_vision_mission', label: 'Profil, Visi & Misi Punguan', icon: 'book-open' },
                 { id: 'settings', label: 'Pengaturan & Data', icon: 'settings' }
             ];
 
@@ -3057,6 +3082,7 @@
                 case 'bph_finance': renderAdminTabBphFinance(main); break;
                 case 'reviews': renderAdminTabReviews(main); break;
                 case 'visitors': renderAdminTabVisitors(main); break;
+                case 'profile_vision_mission': renderAdminTabProfileVisionMission(main); break;
                 case 'settings': renderAdminTabSettings(main); break;
             }
             refreshIcons();
@@ -3141,7 +3167,7 @@
                                     <div class="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between gap-3">
                                         <div class="min-w-0">
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</p>
-                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} • ${escapeHtml(m.status)} • ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400">${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.status)} â€¢ ${escapeHtml(m.sector)}</p>
                                         </div>
                                         <div class="flex items-center gap-1.5 shrink-0">
                                             <button onclick="approveMember('${m.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition">Setujui</button>
@@ -3446,10 +3472,10 @@
                                                 <h4 class="text-sm font-bold text-white truncate">${escapeHtml(m.name)}</h4>
                                                 <span class="px-2 py-0.5 rounded-md border text-[10px] font-bold uppercase shrink-0 ${getStatusBadgeClass(m.status)}">${escapeHtml(m.status)}</span>
                                             </div>
-                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} • ${escapeHtml(m.gender || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} • Huta: ${escapeHtml(m.huta || '-')}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} • Sektor: ${escapeHtml(m.sector)}</p>
-                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} • Daftar: ${formatDateIndo(m.joinedAt)}</p>
+                                            <p class="text-xs text-slate-300 mt-1">Marga: ${escapeHtml(m.marga)} â€¢ ${escapeHtml(m.gender || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">Tubuni: ${escapeHtml(m.tubuniBr || '-')} â€¢ Huta: ${escapeHtml(m.huta || '-')}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(m.activity || '-')} â€¢ Sektor: ${escapeHtml(m.sector)}</p>
+                                            <p class="text-xs text-slate-400 mt-0.5">WA: ${escapeHtml(m.whatsapp)} â€¢ Daftar: ${formatDateIndo(m.joinedAt)}</p>
                                             ${m.reason ? `<p class="text-[11px] text-slate-300 mt-1.5 italic bg-white/5 p-2 rounded-lg">"${escapeHtml(m.reason)}"</p>` : ''}
                                         </div>
                                     </div>
@@ -3521,8 +3547,8 @@
                                                 ${m.photo ? `<img src="${m.photo}" class="w-9 h-11 rounded-lg object-cover border border-white/15 shrink-0">` : ''}
                                                 <div>
                                                     <p class="font-bold text-white">${escapeHtml(m.name)}</p>
-                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? '• Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
-                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} • ${escapeHtml(m.activity || '-')}</p>` : ''}
+                                                    <p class="text-xs text-slate-400">${escapeHtml(m.marga)} ${m.tubuniBr ? 'â€¢ Tubuni ' + escapeHtml(m.tubuniBr) : ''}</p>
+                                                    ${m.huta || m.activity ? `<p class="text-[11px] text-slate-500">${escapeHtml(m.huta || '-')} â€¢ ${escapeHtml(m.activity || '-')}</p>` : ''}
                                                 </div>
                                             </div>
                                         </td>
@@ -3690,7 +3716,7 @@
                                 </div>
                                 <h4 class="text-base font-bold text-white">${escapeHtml(ev.title)}</h4>
                                 <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">${escapeHtml(ev.description)}</p>
-                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} • <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
+                                <p class="text-xs text-slate-400 mt-3"><strong class="text-slate-200">Waktu:</strong> ${escapeHtml(ev.time)} â€¢ <strong class="text-slate-200">Lokasi:</strong> ${escapeHtml(ev.location)}</p>
                             </div>
                             <div class="flex items-center justify-end gap-2 pt-3 border-t border-white/10">
                                 <button onclick="openEventModal('${ev.id}')" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-emas-500/20 text-xs font-semibold text-slate-200 hover:text-emas-300 transition">Edit</button>
@@ -4104,7 +4130,7 @@
                                         <div class="min-w-0">
                                             <span class="text-[11px] font-bold uppercase text-emas-400">${escapeHtml(p.role)}</span>
                                             <p class="text-sm font-bold text-white truncate">${escapeHtml(p.name)}</p>
-                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? '• ' + escapeHtml(p.period) : ''}</p>
+                                            <p class="text-xs text-slate-400 truncate">${escapeHtml(p.marga)} ${p.period ? 'â€¢ ' + escapeHtml(p.period) : ''}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1 shrink-0">
@@ -4417,7 +4443,7 @@
                             <div>
                                 <h1 style="margin: 0; font-size: 19px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px;">${escapeHtml(s.orgName)}</h1>
                                 <p style="margin: 2px 0 0; font-size: 13px; font-weight: 700; color: #b91c1c;">${escapeHtml(s.orgSubtitle)}</p>
-                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} • WA: ${escapeHtml(s.whatsapp)}</p>
+                                <p style="margin: 2px 0 0; font-size: 11px; color: #4b5563;">${escapeHtml(s.address)} â€¢ WA: ${escapeHtml(s.whatsapp)}</p>
                             </div>
                         </div>
                         <div style="text-align: right; font-size: 11px; color: #4b5563;">
@@ -4721,6 +4747,73 @@
         }
 
         // --- ADMIN TAB 6: PENGATURAN & DATA ---
+        // --- ADMIN TAB: EDITOR PROFIL, VISI, DAN 10 MISI ---
+        function renderAdminTabProfileVisionMission(container) {
+            const s = appData.settings || {};
+            const missions = Array.isArray(s.missions) ? s.missions : Array(10).fill('');
+            container.innerHTML = `
+                <div class="space-y-6 max-w-5xl">
+                    <div class="glass-panel rounded-2xl p-5 border border-emas-500/25">
+                        <div class="flex items-start gap-3">
+                            <div class="w-11 h-11 rounded-xl bg-emas-500/15 border border-emas-500/30 flex items-center justify-center shrink-0"><i data-lucide="book-open" class="w-5 h-5 text-emas-300"></i></div>
+                            <div><h3 class="text-base font-bold text-white">Pengaturan Profil, Visi & Misi Punguan</h3><p class="text-sm text-slate-400 mt-1">Ubah tulisan di halaman pengunjung dari sini. Isi misi boleh dikosongkan dan dilengkapi kapan saja.</p></div>
+                        </div>
+                    </div>
+                    <form onsubmit="handleSaveProfileVisionMission(event)" class="space-y-6">
+                        <section class="glass-panel rounded-2xl p-6 space-y-4">
+                            <h4 class="text-sm font-bold text-red-300 flex items-center gap-2"><i data-lucide="compass" class="w-4 h-4"></i> 1. Profil / Tiga Marga</h4>
+                            <div><label class="block text-xs font-semibold text-slate-300 mb-2">Judul Profil</label><input id="pnts-profile-title" maxlength="120" value="${escapeHtml(s.profileTitle || '')}" class="w-full rounded-xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white focus:border-emas-500 outline-none" placeholder="Judul profil punguan"></div>
+                            <div><label class="block text-xs font-semibold text-slate-300 mb-2">Deskripsi Profil</label><textarea id="pnts-profile-description" rows="4" maxlength="2000" class="w-full rounded-xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white focus:border-emas-500 outline-none" placeholder="Tuliskan deskripsi Tiga Marga...">${escapeHtml(s.profileDescription || '')}</textarea></div>
+                        </section>
+                        <section class="glass-panel rounded-2xl p-6 space-y-4">
+                            <h4 class="text-sm font-bold text-emas-300 flex items-center gap-2"><i data-lucide="heart-handshake" class="w-4 h-4"></i> 2. Visi Punguan</h4>
+                            <div><label class="block text-xs font-semibold text-slate-300 mb-2">Judul Visi</label><input id="pnts-vision-title" maxlength="120" value="${escapeHtml(s.visionTitle || 'Visi Punguan')}" class="w-full rounded-xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white focus:border-emas-500 outline-none"></div>
+                            <div><label class="block text-xs font-semibold text-slate-300 mb-2">Isi Visi</label><textarea id="pnts-vision-description" rows="4" maxlength="2000" class="w-full rounded-xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white focus:border-emas-500 outline-none" placeholder="Tuliskan visi punguan...">${escapeHtml(s.visionDescription || '')}</textarea></div>
+                        </section>
+                        <section class="glass-panel rounded-2xl p-6 space-y-4">
+                            <div><h4 class="text-sm font-bold text-sky-300 flex items-center gap-2"><i data-lucide="sparkles" class="w-4 h-4"></i> 3. Sepuluh Misi Punguan</h4><p class="text-xs text-slate-400 mt-1">Isi satu tujuan pada setiap kolom. Kolom kosong tidak akan ditampilkan di halaman pengunjung.</p></div>
+                            <div><label class="block text-xs font-semibold text-slate-300 mb-2">Judul Bagian Misi</label><input id="pnts-mission-title" maxlength="120" value="${escapeHtml(s.missionTitle || 'Misi Punguan')}" class="w-full rounded-xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white focus:border-emas-500 outline-none"></div>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                ${Array.from({length:10}, (_,i) => `<div><label class="block text-xs font-semibold text-slate-300 mb-2">Misi ${i+1}</label><textarea id="pnts-mission-${i+1}" rows="3" maxlength="1000" class="w-full rounded-xl bg-black/30 border border-white/10 px-4 py-3 text-sm text-white focus:border-emas-500 outline-none" placeholder="Isi misi nomor ${i+1} (boleh dikosongkan)">${escapeHtml(missions[i] || '')}</textarea></div>`).join('')}
+                            </div>
+                        </section>
+                        <div class="sticky bottom-3 z-20 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-2xl border border-emas-500/30 bg-[#11131A]/95 backdrop-blur-xl p-4 shadow-2xl">
+                            <p class="text-xs text-slate-400">Perubahan disimpan ke Spreadsheet melalui database PNTS DURI.</p>
+                            <button id="pnts-save-profile-btn" type="submit" class="px-6 py-3 rounded-xl bg-gradient-to-r from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 text-white text-sm font-bold shadow-lg shadow-red-900/30 flex items-center justify-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> Simpan Perubahan</button>
+                        </div>
+                    </form>
+                </div>`;
+            refreshIcons();
+        }
+
+        async function handleSaveProfileVisionMission(event) {
+            event.preventDefault();
+            if (!pntsAdminToken) { showToast('Sesi admin tidak aktif. Silakan login kembali.', 'error'); return; }
+            const button = document.getElementById('pnts-save-profile-btn');
+            const previous = JSON.parse(JSON.stringify(appData.settings));
+            const value = id => (document.getElementById(id)?.value || '').trim();
+            const missions = Array.from({length:10}, (_,i) => value('pnts-mission-' + (i+1)));
+            appData.settings.profileTitle = value('pnts-profile-title') || 'Tiga Marga Toga Simatupang';
+            appData.settings.profileDescription = value('pnts-profile-description');
+            appData.settings.visionTitle = value('pnts-vision-title') || 'Visi Punguan';
+            appData.settings.visionDescription = value('pnts-vision-description');
+            appData.settings.missionTitle = value('pnts-mission-title') || 'Misi Punguan';
+            appData.settings.missions = missions;
+            saveData();
+            if (button) { button.disabled = true; button.innerHTML = '<i data-lucide="loader-circle" class="w-4 h-4 animate-spin"></i> Menyimpan...'; refreshIcons(); }
+            try {
+                await flushCloudSave();
+                showToast('Profil, visi, dan 10 misi berhasil disimpan ke database.', 'success');
+                if (currentView === 'public') renderPublicPortal();
+                renderAdminDashboard();
+            } catch (err) {
+                appData.settings = previous;
+                saveData(true);
+                showToast('Gagal menyimpan ke Spreadsheet: ' + (err.message || err), 'error');
+                renderAdminDashboard();
+            }
+        }
+
         function renderAdminTabSettings(container) {
             const s = appData.settings;
             container.innerHTML = `
@@ -5089,6 +5182,16 @@
             }, publicRoot);
         }
 
+        function showPublicInitialLoader() {
+            const loader = document.getElementById('batak-login-loader');
+            if (!loader) return;
+            const logoHolder = document.getElementById('batak-loader-logo');
+            if (logoHolder) logoHolder.innerHTML = getGorgaLogoSVG('w-14 h-14');
+            updateBatakLoginLoader(28, 'Horas! Menyiapkan halaman pengunjung PNTS DURI...');
+            loader.classList.remove('hidden');
+            loader.style.opacity = '1';
+        }
+
         // =====================================================================
         // 11. INITIALIZE APPLICATION ON LOAD
         // =====================================================================
@@ -5107,10 +5210,16 @@
                 loginForm.addEventListener('submit', handleAdminLoginSubmit);
             }
 
+            // Gunakan desain loading Batak yang sama seperti saat login admin.
+            showPublicInitialLoader();
             switchView('public');
 
-            // Ambil data publik terbaru dari database melalui Cloudflare Worker.
-            syncPublicFromCloud();
+            // Ambil data publik terbaru; bila jaringan lambat/gagal, cache lokal tetap tampil.
+            const minLoading = new Promise(resolve => setTimeout(resolve, 900));
+            Promise.allSettled([syncPublicFromCloud(), minLoading]).finally(() => {
+                updateBatakLoginLoader(100, 'Horas! Halaman pengunjung siap.');
+                hideBatakLoginLoader();
+            });
         });
     </script>
 </body>
